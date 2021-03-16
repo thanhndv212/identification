@@ -54,7 +54,7 @@ def standardParameters(njoints):
 	params_std = dict(zip(params, phi)) 
 	return params_std
 
-#generate waypoints and identification model 
+#generate waypoints 
 def generateWaypoints(N,nq,nv,mlow,mhigh): 
 	"""This function generates N random values for joints' position,velocity, acceleration.
 		Input: 	N: number of samples
@@ -69,7 +69,32 @@ def generateWaypoints(N,nq,nv,mlow,mhigh):
 		v = np.vstack((v,np.random.uniform(low = mlow, high = mhigh, size=(nv,))))
 		a = np.vstack((a,np.random.uniform(low = mlow, high = mhigh, size=(nv,))))
 	return q, v, a
-
+#generate waypoints with base link
+def generateWaypoints_fext(N, robot,mlow,mhigh): 
+	"""This function generates N random values for joints' position,velocity, acceleration.
+		Input: 	N: number of samples
+				nq: length of q, nv : length of v
+				mlow and mhigh: the bound for random function
+		Output: q, v, a: joint's position, velocity, acceleration"""
+	nq = robot.model.nq
+	nv = robot.model.nv
+	q0 = robot.q0[:7]
+	v0 = np.zeros(6)
+	a0 = np.zeros(6)
+	q = np.empty((1,nq))
+	v = np.empty((1,nv))
+	a = np.empty((1,nv))
+	for i in range(N):
+		
+		q_ = np.append(q0, np.random.uniform(low = mlow, high = mhigh, size=(nq-7,)))
+		q = np.vstack((q,q_))
+		
+		v_ = np.append(v0,np.random.uniform(low = mlow, high = mhigh, size=(nv-6,)))
+		v = np.vstack((v,v_))
+		
+		a_ = np.append(a0,np.random.uniform(low = mlow, high = mhigh, size=(nv-6,)))
+		a = np.vstack((a,a_))
+	return q, v, a
 #Building regressor
 def  iden_model(model, data, N, nq, nv, njoints, q, v, a): 
 	"""This function calculates joint torques and generates the joint torque regressor.
@@ -96,10 +121,25 @@ def  iden_model(model, data, N, nq, nv, njoints, q, v, a):
 				W[j*N + i, 10*(njoints-1)+2*j] = v[i,j]
 				W[j*N + i, 10*(njoints-1)+2*j + 1] = np.sign(v[i,j])
 	return tau, W
-def iden_model_fext():
+def  iden_model_fext(model, data, N, nq, nv, njoints, q, v, a): 
+	"""This function calculates joint torques and generates the joint torque regressor.
+		Note: a flag IsFrictioncld to include in dynamic model
+		Input: 	model, data: model and data structure of robot from Pinocchio
+				q, v, a: joint's position, velocity, acceleration
+				N : number of samples
+				nq: length of q
+		Output: tau: vector of joint torque
+				W : joint torque regressor"""
+	tau = np.empty(6*N)
+	W = np.empty([N*6, 10*(njoints-1)]) 
+	for i in range(N):
+		tau_temp = pin.rnea(model, data, q[i,:], v[i,:], a[i,:])
+		W_temp = pin.computeJointTorqueRegressor(model, data, q[i,:], v[i,:], a[i,:])
+		for j in range(6):
+			tau[j*N + i] = tau_temp[j]
+			W[j*N + i, :] = W_temp[j,:]
+	return tau, W
 
-
-	pass
 #Eliminate columns crspnd. non-contributing parameters
 def eliminateNonAffecting(W, tol_e):
 	"""This function eliminates columns which has L2 norm smaller than tolerance.
@@ -181,33 +221,31 @@ def QR_pivoting(W_e, params_r):
 # GepettoVisualizer: -g
 # MeshcatVisualizer: -m
 
-def visualization(): 
-	print('visualization')
-	pass
+def visualization(robot): 
+	VISUALIZER = None
+	if len(argv)>1:
+		opt = argv[1]
+		if opt == '-g':
+			VISUALIZER = GepettoVisualizer
+		elif opt == '-m':
+			VISUALIZER = MeshcatVisualizer
+		#else:
+		#    raise ValueError("Unrecognized option: " + opt)
+	# dt = 1e-2
+	if VISUALIZER:
+		robot.setVisualizer(VISUALIZER())
+		robot.initViewer()
+		robot.loadViewerModel("pinocchio")
+		robot.display(robot.q0)
+		# for k in range(q.shape[0]):
+		# 	t0 = time.time()
+		# 	robot.display(q[k,:])
+		# 	t1 = time.time()
+		# 	elapsed_time = t1 - t0
+		# 	if elapsed_time < dt:
+		# 		time.sleep(dt - elapsed_time)
 
-VISUALIZER = None
-if len(argv)>1:
-	opt = argv[1]
-	if opt == '-g':
-		VISUALIZER = GepettoVisualizer
-	elif opt == '-m':
-		VISUALIZER = MeshcatVisualizer
-	#else:
-	#    raise ValueError("Unrecognized option: " + opt)
-dt = 1e-2
-if VISUALIZER:
-	robot.setVisualizer(VISUALIZER())
-	robot.initViewer()
-	robot.loadViewerModel("pinocchio")
-	for k in range(q.shape[0]):
-		t0 = time.time()
-		robot.display(q[k,:])
-		t1 = time.time()
-		elapsed_time = t1 - t0
-		if elapsed_time < dt:
-			time.sleep(dt - elapsed_time)
-
-isFext = False
+isFext = True
 
 isFrictionincld = False
 if len(argv)>1:
@@ -222,16 +260,21 @@ print(model)
 data = robot.data	
 nq, nv , njoints = model.nq, model.nv, model.njoints
 #numbers of samples
-N = 1000
+N = 100
 params_std = standardParameters(njoints)
 print("Standard inertial parameters: ",params_std)
 print("###########################")
-q , qd, qdd = generateWaypoints(N, nq, nv, -1, 1)
-tau, W = iden_model(model, data, N,  nq, nv,njoints, q, qd, qdd)
+if not isFext:
+	q , qd, qdd = generateWaypoints(N, nq, nv, -1, 1)
+	tau, W = iden_model(model, data, N,  nq, nv,njoints, q, qd, qdd)
+else:
+	q, qd, qdd = generateWaypoints_fext(N, robot, -1, 1)
+	tau, W = iden_model_fext(model, data, N,  nq, nv,njoints, q, qd, qdd)
 W_e, params_r = eliminateNonAffecting(W, 1e-6)
 W_b, phi_b, numrank_W, params_rsorted = QR_pivoting(W_e, params_r)
 print("###########################")
 print('condition number of base regressor: ',np.linalg.cond(W_b))
 U, S, VT = np.linalg.svd(W_b)
 print('singular values of base regressor:', S)
+visualization(robot)
 # print(nq, nv)
