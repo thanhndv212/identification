@@ -2,7 +2,7 @@ import pinocchio as pin
 from pinocchio.robot_wrapper import RobotWrapper
 from pinocchio.visualize import (GepettoVisualizer, MeshcatVisualizer)
 from sys import argv
-from tabulate import tabulate
+# from tabulate import tabulate
 import time 
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -12,6 +12,7 @@ from pinocchio.utils import *
 from scipy import linalg
 import os
 from os.path import dirname, join, abspath
+import pandas as pd 
 
 #Load the URDF model with RobotWrapper
 def loadModels(robotname, robot_urdf_file):
@@ -46,12 +47,16 @@ def standardParameters(njoints):
 		for k in P: 
 			phi.append(k)
 		for j in params_name: 
-			params.append(j + str(i))
+			if not isFext:
+				params.append(j + str(i))
+			else:
+				params.append(j + str(i-1))
 	if isFrictionincld:
 		for k in range(1, njoints):
 			phi.extend([fv,fc])
 			params.extend(['fv' + str(k),'fc' + str(k)])
 	params_std = dict(zip(params, phi)) 
+
 	return params_std
 
 #generate waypoints 
@@ -205,10 +210,9 @@ def QR_pivoting(W_e, params_r):
 				params_base[i] = params_base[i] + ' + '+str(abs(beta[i,j])) + '*'+ str(params_rgp[j])
 	print('base parameters and their identified values: ')
 	base_parameters = dict(zip(params_base,phi_b))
-	print(base_parameters)
 	# table = [params_base, phi_b]
 	# print(tabulate(table))
-	return W_b, phi_b, numrank_W, params_rsorted
+	return W_b, base_parameters
 
 # print('idpnd. parameters: ', params_idp)
 # print('regrouped parameters: ', params_rgp)
@@ -247,7 +251,7 @@ def visualization(robot):
 
 isFext = True
 
-isFrictionincld = False
+isFrictionincld = True
 if len(argv)>1:
 	if argv[1] == '-f':
 		isFrictionincld = True
@@ -262,7 +266,8 @@ nq, nv , njoints = model.nq, model.nv, model.njoints
 #numbers of samples
 N = 100
 params_std = standardParameters(njoints)
-print("Standard inertial parameters: ",params_std)
+table_stdparams = pd.DataFrame(params_std.items(), columns = ["Standard Parameters", "Value"])
+print(table_stdparams.to_latex())
 print("###########################")
 if not isFext:
 	q , qd, qdd = generateWaypoints(N, nq, nv, -1, 1)
@@ -271,10 +276,12 @@ else:
 	q, qd, qdd = generateWaypoints_fext(N, robot, -1, 1)
 	tau, W = iden_model_fext(model, data, N,  nq, nv,njoints, q, qd, qdd)
 W_e, params_r = eliminateNonAffecting(W, 1e-6)
-W_b, phi_b, numrank_W, params_rsorted = QR_pivoting(W_e, params_r)
+W_b, base_parameters  = QR_pivoting(W_e, params_r)
+table_base = pd.DataFrame(base_parameters.items(), columns = ["Base Parameters", "Value"])
+print(table_base.to_latex())
 print("###########################")
 print('condition number of base regressor: ',np.linalg.cond(W_b))
 U, S, VT = np.linalg.svd(W_b)
 print('singular values of base regressor:', S)
-visualization(robot)
+#visualization(robot)
 # print(nq, nv)
