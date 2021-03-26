@@ -46,7 +46,7 @@ class Trapezoidal():
 					self.q[j] = np.append(self.q[j],q_)
 					self.qd[j] = np.append(self.qd[j],qd_)
 					self.qdd[j] = np.append(self.qdd[j],qdd_)
-		self.plotTraj()
+		# self.plotTraj()
 		return self.q, self.qd, self.qdd
 
 
@@ -103,8 +103,14 @@ def main():
 		acc = np.random.uniform(-0.2, 0.2, size=(nwaypoints-1, njoints))
 		delta_t1 = np.random.randint( 100, 300, size=(nwaypoints-1, njoints))
 		delta_t2 = np.random.randint( 300, 400, size=(nwaypoints-1, njoints))
+		time_points = np.array([[0.], [10.], [20.],[30.]])
+
 		Nf = np.full(nwaypoints-1, 1000, dtype = int)
 		traj = Trapezoidal(njoints = njoints, nwaypoints = nwaypoints, acc = acc, delta_t1 = delta_t1, delta_t2 = delta_t2, Nf = Nf)
 		q, qd, qdd = traj.Trapezoidal()
+
+		points = np.array([[q[0][i*1000-1] for i in range(nwaypoints)]])
+		
+		print(points)
 if __name__ == '__main__':
 		main()
