@@ -77,7 +77,7 @@ def trap():
 
 waypoints1, vels1, accs1 = pw_chs()
 waypoints, vels, accs = pw_polynomial()
-fig = plt.figure(2)
+fig = plt.figure()
 axs = fig.subplots(3,1)
 
 axs[0].plot(waypoints[:,0], waypoints[:,1], color='b',label='polynomial')
@@ -86,6 +86,7 @@ axs[0].plot(waypoints[:,0],q[0][:],color='r',label='trapezoidal')
 axs[0].legend(loc='upper right')
 axs[0].set_ylabel('q')
 axs[0].scatter(time_points, points)
+axs[0].grid()
 
 axs[1].plot(vels[:,0], vels[:,1],color='b',label='polynomial')
 axs[1].plot(vels1[:,0], vels1[:,1],color='g',label='cubic spline')
@@ -93,6 +94,7 @@ axs[1].plot(waypoints[:,0],qd[0][:],color='r',label='trapezoidal')
 axs[1].legend(loc='upper right')
 axs[1].set_ylabel('dq')
 axs[1].scatter(time_points, points_derivative)
+axs[1].grid()
 
 axs[2].plot(accs[:,0], accs[:,1],color='b',label='polynomial')
 axs[2].plot(accs1[:,0], accs1[:,1],color='g',label='cubic spline')
@@ -100,6 +102,7 @@ axs[2].plot(waypoints[:,0],qdd[0][:],color='r',label='trapezoidal')
 axs[2].legend(loc='upper right')
 axs[2].set_ylabel('ddq')
 axs[2].scatter(time_points, points_second_derivative)
-
+axs[2].grid()
+axs[2].set_xlabel('time')
 
 plt.show(block=True)

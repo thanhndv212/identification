@@ -46,7 +46,7 @@ class Trapezoidal():
 					self.q[j] = np.append(self.q[j],q_)
 					self.qd[j] = np.append(self.qd[j],qd_)
 					self.qdd[j] = np.append(self.qdd[j],qdd_)
-		# self.plotTraj()
+		self.plotTraj()
 		return self.q, self.qd, self.qdd
 
 

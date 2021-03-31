@@ -249,15 +249,16 @@ def visualization(robot):
 		# 	if elapsed_time < dt:
 		# 		time.sleep(dt - elapsed_time)
 
-isFext = True
+isFext = False
 
-isFrictionincld = True
+isFrictionincld = False
 if len(argv)>1:
 	if argv[1] == '-f':
 		isFrictionincld = True
 fv = 0.05
 fc = 0.01
-robot = loadModels("2DOF_description", "2DOF_description.urdf")
+robot = loadModels("staubli_tx40_description", "tx40.urdf")
+# robot = loadModels("2DOF_description", "2DOF_description.urdf")
 # robot = loadModels("SC_3DOF", "3DOF.urdf")
 model = robot.model
 print(model)
@@ -267,7 +268,7 @@ nq, nv , njoints = model.nq, model.nv, model.njoints
 N = 100
 params_std = standardParameters(njoints)
 table_stdparams = pd.DataFrame(params_std.items(), columns = ["Standard Parameters", "Value"])
-print(table_stdparams.to_latex())
+print(table_stdparams.to_latex())#latex table
 print("###########################")
 if not isFext:
 	q , qd, qdd = generateWaypoints(N, nq, nv, -1, 1)
@@ -278,10 +279,10 @@ else:
 W_e, params_r = eliminateNonAffecting(W, 1e-6)
 W_b, base_parameters  = QR_pivoting(W_e, params_r)
 table_base = pd.DataFrame(base_parameters.items(), columns = ["Base Parameters", "Value"])
-print(table_base.to_latex())
+print(table_base.to_latex())#latex
 print("###########################")
 print('condition number of base regressor: ',np.linalg.cond(W_b))
 U, S, VT = np.linalg.svd(W_b)
 print('singular values of base regressor:', S)
-#visualization(robot)
+visualization(robot)
 # print(nq, nv)

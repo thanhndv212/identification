@@ -52,6 +52,7 @@ class doubleS():
 		N_d = int(T_d/ts)
 		N_v = int(T_v/ts)
 		N = N_a + N_v + N_d
+		print(Tj1)
 		Nj1 = int(Tj1/ts)
 		Nj2 = int(Tj2/ts)
 		print(N_a, N_d, N_v, N, Nj1, Nj2)
@@ -299,38 +300,41 @@ class doubleS():
 					self.getParams_onephase( T_a, T_d, a_max_recursive)
 					break
 				else: 
-					# both_reached = check_both_reached(T_a, T_d, Tj1)
 					if T_a > 2*Tj1 and T_d >2*Tj2:
 						both_reached = True
 					else:		
 						both_reached = False 
 				a_max_recursive = gamma*a_max_recursive
 
-		# def check_both_reached(Ta, Td, Tj):
-		# 	if Ta > 2*Tj and Td >2*Tj:
-		# 		return True
-		# 	else:
-		# 		return False 
+	
 		print("T_a, T_d, T_v, Tj1, Tj2", self.T_a, self.T_d, self.T_v, self.Tj1,self.Tj2 )
 	def plot_doubleS(self):
 		fig, axs = plt.subplots(3,1)
 		axs[0].plot(self.rt,self.q)
 		axs[0].set_ylabel('q')
+		axs[0].grid()
+
 		axs[1].plot(self.rt,self.dq)
 		axs[1].set_ylabel('dq')
+		axs[1].axhline(y = self.v_max, color = 'black', linestyle = "dashed")
+		axs[1].grid()
+
 		axs[2].plot(self.rt,self.ddq)
 		axs[2].set_ylabel('dqq')
-		axs[2].set_xlabel('time')		
+		axs[2].axhline(y = self.a_max, color = 'black', linestyle = "dashed")
+		axs[2].axhline(y = self.a_min, color = 'black', linestyle = "dashed")
+		axs[2].set_xlabel('time')
+		axs[2].grid()		
 		plt.show(block=True)
 def main():
 	isFeasible = False
 	q0 	= 0
-	qf 	= 100
-	dq0 = 0
-	dqf = 2
-	v_max = 10
+	qf 	= 10
+	dq0 = 2
+	dqf = 0
+	v_max = 5
 	a_max = 10
-	j_max = 10
+	j_max = 30
 	traj = doubleS( q0, qf, dq0, dqf, v_max, a_max, j_max)
 	traj.initilize()
 	isFeasible = traj.check_feasiable()
