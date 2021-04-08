@@ -58,65 +58,77 @@ class doubleS():
 		print(N_a, N_d, N_v, N, Nj1, Nj2)
 
 
-
-		q = np.zeros(N+1)
-		dq = np.zeros(N+1)
-		ddq = np.zeros(N+1)
-		rt = np.zeros(N+1)
+		#positions, velocities, acceleration, jerks and tine steps.
+		q 	= np.zeros(N)
+		dq 	= np.zeros(N)
+		ddq = np.zeros(N)
+		d3q = np.zeros(N)
+		rt 	= np.zeros(N)
 
 		#phase 1: acceleration
-		for i in range(Nj1+1):
-			t = i*ts
-			rt[i] = t
-			q[i] = self.q0 + self.dq0*t  + self.j_max*np.power(t,3)/6
-			dq[i] = self.dq0 +  self.j_max*np.power(t,2)/2
-			ddq[i] = self.j_max*t
-		for i in range(Nj1+1, N_a - Nj1+1):
-			t = i*ts 
-			rt[i] = t
-			q[i] =  self.q0 + self.dq0*t  + (a_lima/6)*(3*np.power(t,2) -3*Tj1*t + Tj1*Tj1)
-			dq[i] = self.dq0 +  a_lima*(t - Tj1/2)
-			ddq[i] = a_lima
-		for i in range(N_a - Nj1+1, N_a+1):
-			t = i*ts
-			rt[i] = t 
-			q[i] = self.q0 + (v_lima + self.dq0)*T_a/2 - v_lima*(T_a - t) - (self.j_min/6)*np.power((T_a-t),3)
-			dq[i] = v_lima + self.j_min*np.power((T_a - t),2)/2
-			ddq[i] = -self.j_min*(T_a - t)
+		for i in range(Nj1):
+			t 		= i*ts
+			rt[i] 	= t
+			q[i] 	= self.q0 + self.dq0*t  + self.j_max*np.power(t,3)/6
+			dq[i] 	= self.dq0 +  self.j_max*np.power(t,2)/2
+			ddq[i] 	= self.j_max*t
+			d3q[i] 	= self.j_max
 
+		for i in range(Nj1, N_a - Nj1):
+			t 		= i*ts 
+			rt[i] 	= t
+			q[i] 	=  self.q0 + self.dq0*t  + (a_lima/6)*(3*np.power(t,2) -3*Tj1*t + Tj1*Tj1)
+			dq[i] 	= self.dq0 +  a_lima*(t - Tj1/2)
+			ddq[i] 	= a_lima
+			d3q[i] 	= 0
+
+		for i in range(N_a - Nj1, N_a):
+			t 		= i*ts
+			rt[i] 	= t 
+			q[i] 	= self.q0 + (v_lima + self.dq0)*T_a/2 - v_lima*(T_a - t) - (self.j_min/6)*np.power((T_a-t),3)
+			dq[i] 	= v_lima + self.j_min*np.power((T_a - t),2)/2
+			ddq[i] 	= -self.j_min*(T_a - t)
+			d3q[i] 	= self.j_min
 
 		#phase 2: constant velocity 
-		for i in range(N_a+1, N_a + N_v + 1):
-			t = i*ts
-			rt[i] = t 
-			q[i] = self.q0 + (v_lima + self.dq0)*T_a/2 + v_lima*(t - T_a)
-			dq[i]= v_lima
-			ddq[i] = 0
-
+		for i in range(N_a, N_a + N_v ):
+			t 		= i*ts
+			rt[i] 	= t 
+			q[i] 	= self.q0 + (v_lima + self.dq0)*T_a/2 + v_lima*(t - T_a)
+			dq[i]	= v_lima
+			ddq[i] 	= 0
+			d3q[i] 	= 0
 			
 		#phase 3: decelartion 
-		for i in range(N - N_d + 1, N - N_d + Nj2+1):
-			t = i*ts
-			rt[i] = t 
-			q[i] = self.qf - (v_limd + self.dqf)*T_d/2 + v_limd*(t - T + T_d) - (self.j_max/6)*np.power((t - T + T_d),3)
-			dq[i] = v_limd - self.j_max*np.power((t - T + T_d),2)/2
-			ddq[i] = -self.j_max*(t - T + T_d)
-		for i in range(N-N_d + Nj2+1, N - Nj2 + 1):
+		for i in range(N - N_d , N - N_d + Nj2):
+			t 		= i*ts
+			rt[i] 	= t 
+			q[i] 	= self.qf - (v_limd + self.dqf)*T_d/2 + v_limd*(t - T + T_d) - (self.j_max/6)*np.power((t - T + T_d),3)
+			dq[i] 	= v_limd - self.j_max*np.power((t - T + T_d),2)/2
+			ddq[i] 	= -self.j_max*(t - T + T_d)
+			d3q[i] 	= self.j_min
+
+		for i in range(N-N_d + Nj2, N - Nj2 ):
 			t = i*ts
 			rt[i] = t 
 			q[i] = self.qf - (v_limd + self.dqf)*T_d/2 + v_limd*(t - T + T_d) + (a_limd/6)*(3*np.power((t - T + T_d),2) - 3*Tj2*(t - T + T_d) + Tj2*Tj2)
 			dq[i] = v_limd + a_limd*(t - T + T_d - Tj2/2)
 			ddq[i] = a_limd
-		for i in range(N-Nj2 +1, N+1):
+			d3q[i] = 0
+
+		for i in range(N-Nj2, N):
 			t = i*ts
 			rt[i] = t 
 			q[i] = self.qf - (self.dqf)*(T - t) - (self.j_max/6)*np.power((T-t),3)
 			dq[i] = self.dqf + self.j_max*np.power((T-t),2)/2
 			ddq[i] = -self.j_max*(T - t)
+			d3q[i] = self.j_max
+
 		#segment1 
 		self.q = q
 		self.dq = dq
 		self.ddq = ddq
+		self.d3q = d3q
 		self.rt = rt
 		self.finalize()
 			
@@ -308,43 +320,52 @@ class doubleS():
 
 	
 		print("T_a, T_d, T_v, Tj1, Tj2", self.T_a, self.T_d, self.T_v, self.Tj1,self.Tj2 )
-	def plot_doubleS(self):
-		fig, axs = plt.subplots(3,1)
-		axs[0].plot(self.rt,self.q)
-		axs[0].set_ylabel('q')
+	def plot_doubleS(self, Scurve_color = None):
+		# if Scurve_color == None:
+		# 	Scurve_color = 'blue'
+		fig, axs = plt.subplots(4,1, figsize = (6,12))
+		axs[0].plot(self.rt,self.q, color = Scurve_color)
+		axs[0].set_ylabel('Positions, q')
 		axs[0].grid()
 
-		axs[1].plot(self.rt,self.dq)
-		axs[1].set_ylabel('dq')
+		axs[1].plot(self.rt,self.dq, color = Scurve_color)
+		axs[1].set_ylabel('Velocities, dq')
 		axs[1].axhline(y = self.v_max, color = 'black', linestyle = "dashed")
+		axs[1].axhline(y = self.v_min, color = 'black', linestyle = "dashed")
 		axs[1].grid()
 
-		axs[2].plot(self.rt,self.ddq)
-		axs[2].set_ylabel('dqq')
+		axs[2].plot(self.rt,self.ddq, color = Scurve_color)
+		axs[2].set_ylabel('Accelerations, dqq')
 		axs[2].axhline(y = self.a_max, color = 'black', linestyle = "dashed")
 		axs[2].axhline(y = self.a_min, color = 'black', linestyle = "dashed")
-		axs[2].set_xlabel('time')
-		axs[2].grid()		
-		plt.show(block=True)
+		axs[2].grid()
+
+		axs[3].plot(self.rt, self.d3q,color = Scurve_color)
+		axs[3].set_ylabel('Jerks, d3q')		
+		axs[3].set_xlabel('Time (s)')
+		axs[3].axhline(y = self.j_max, color = 'black', linestyle = "dashed")
+		axs[3].axhline(y = self.j_min, color = 'black', linestyle = "dashed")
+		axs[3].grid()
+		# plt.show(block=True)
 def main():
 	isFeasible = False
 	q0 	= 0
-	qf 	= 10
+	qf 	= 0.7
 	dq0 = 2
 	dqf = 0
 	v_max = 5
 	a_max = 10
-	j_max = 30
+	j_max = 20
 	traj = doubleS( q0, qf, dq0, dqf, v_max, a_max, j_max)
 	traj.initilize()
 	isFeasible = traj.check_feasiable()
 	if isFeasible:
 		traj.getCoeff_PTP()
 		traj.get_doubleS()
-		traj.plot_doubleS()
+		traj.plot_doubleS('red')
 		print("double S curves is ready!")
 	else: 
 		print("not possible to create a double S velocity profile given configuration!")
-		
+	plt.show(block=True)
 if __name__ =='__main__':
 	main()

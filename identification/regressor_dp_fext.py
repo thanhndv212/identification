@@ -176,6 +176,7 @@ def QR_pivoting(W_e, params_r):
 				numrank_W: numerical rank of regressor, determined by using a therehold
 				params_rsorted: inertial parameters included in base parameters """
 	Q, R, P = linalg.qr(W_e, pivoting = True) #scipy has QR pivoting
+	print(pd.DataFrame(R[0:7,:]).to_latex())
 	# sort params as decreasing order of diagonal of R 
 	params_rsorted = []
 	for ind in P: 
@@ -257,8 +258,8 @@ if len(argv)>1:
 		isFrictionincld = True
 fv = 0.05
 fc = 0.01
-robot = loadModels("staubli_tx40_description", "tx40.urdf")
-# robot = loadModels("2DOF_description", "2DOF_description.urdf")
+# robot = loadModels("staubli_tx40_description", "tx40.urdf")
+robot = loadModels("2DOF_description", "2DOF_description.urdf")
 # robot = loadModels("SC_3DOF", "3DOF.urdf")
 model = robot.model
 print(model)
