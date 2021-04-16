@@ -320,10 +320,14 @@ class doubleS():
 
 	
 		print("T_a, T_d, T_v, Tj1, Tj2", self.T_a, self.T_d, self.T_v, self.Tj1,self.Tj2 )
-	def plot_doubleS(self, Scurve_color = None):
+	def plot_doubleS(self, Scurve_color = None, fig = None):
 		# if Scurve_color == None:
 		# 	Scurve_color = 'blue'
-		fig, axs = plt.subplots(4,1, figsize = (6,12))
+		# if axs.shape[0] == 0:
+		axs = []
+		for i in range(4):
+			ind = i + 1
+			axs.append(fig.add_subplot(4,1,ind))
 		axs[0].plot(self.rt,self.q, color = Scurve_color)
 		axs[0].set_ylabel('Positions, q')
 		axs[0].grid()
@@ -348,13 +352,14 @@ class doubleS():
 		axs[3].grid()
 		# plt.show(block=True)
 def main():
+	fig1 = plt.figure( figsize = (6,12))
 	isFeasible = False
 	q0 	= 0
 	qf 	= 0.7
 	dq0 = 2
 	dqf = 0
 	v_max = 5
-	a_max = 10
+	a_max = 5
 	j_max = 20
 	traj = doubleS( q0, qf, dq0, dqf, v_max, a_max, j_max)
 	traj.initilize()
@@ -362,10 +367,10 @@ def main():
 	if isFeasible:
 		traj.getCoeff_PTP()
 		traj.get_doubleS()
-		traj.plot_doubleS('red')
+		traj.plot_doubleS('blue', fig1)
 		print("double S curves is ready!")
 	else: 
 		print("not possible to create a double S velocity profile given configuration!")
-	plt.show(block=True)
+	plt.show(block = True)
 if __name__ =='__main__':
 	main()

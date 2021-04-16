@@ -45,7 +45,7 @@ def visualization(robot,q0):
 		#else:
 		#    raise ValueError("Unrecognized option: " + opt)
 	q = test_trajectory()
-	dt = 0.02
+	dt = 1/5000
 	if VISUALIZER:
 		robot.setVisualizer(VISUALIZER())
 		robot.initViewer()
@@ -54,25 +54,35 @@ def visualization(robot,q0):
 			robot.display(robot.q0)
 		else:
 			for k in range(q.shape[0]):
-				t0 = time.time()
-				robot.display(q[k,:])
-				t1 = time.time()
-				elapsed_time = t1 - t0
-				if elapsed_time < dt:
-					time.sleep(dt - elapsed_time)
+				if k%5 ==0:
+					t0 = time.time()
+					robot.display(q[k,:])
+					t1 = time.time()
+					elapsed_time = t1 - t0
+					print(elapsed_time)
+					if elapsed_time < dt:
+						time.sleep(dt - elapsed_time)
+				else:
+					continue
 def test_trajectory():
-	ts = 0.001
-	a = 2
-	b = 2
+	# ts = 0.001
+	# a = 2
+	# b = 2
 	
-	N = 500
-	Q = np.zeros((N,6))
-	for k in range(N):
-		t = k*ts
-		q_i = a*t + b*t*t
-		for i in range(6):
-			Q[k][i] = q_i
+	# N = 500
+	# Q = np.zeros((N,6))
+	# for k in range(N):
+	# 	t = k*ts
+	# 	q_i = a*t + b*t*t
+	# 	for i in range(6):
+	# 		Q[k][i] = q_i
+	data = pd.read_csv('src/thanh/test_read_data.csv')
+	Q = data.to_numpy()
+	red = np.array([1/32, 1/32, 1/45, -1/48, 1/45, 1/32])
+	for i in range(6):
+		Q[:,i] *= red[i]
 	return Q
 robot = loadModels("staubli_tx40_description", "tx40.urdf")
+# robot = loadModels("2DOF_description", "2DOF_description.urdf")
 
 visualization(robot,False)

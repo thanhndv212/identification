@@ -1,0 +1,43 @@
+v_max reached, a_max not reached, a_min reached
+	q0 	= 0
+	qf 	= 10
+	dq0 = 4
+	dqf = 0
+	v_max = 6
+	a_max = 10
+	j_max = 20
+v_max reached, a_max reached, a_min not reached
+	q0 	= 0
+	qf 	= 10
+	dq0 = 0
+	dqf = 4
+	v_max = 6
+	a_max = 10
+	j_max = 20
+
+v_max reached, a_max not reached, a_min not reached
+	q0 	= 0
+	qf 	= 10
+	dq0 = 2
+	dqf = 2
+	v_max = 6
+	a_max = 10
+	j_max = 20
+v_max not reached, a_max  reached , a_min reached 
+	q0 	= 0
+	qf 	= 5
+	dq0 = 1
+	dqf = 1
+	v_max = 6
+	a_max = 5
+	j_max = 20
+
+v_max not reached, a_max not reached, a_min not reached
+
+	q0 	= 0
+	qf 	= 5
+	dq0 = 1
+	dqf = 1
+	v_max = 6
+	a_max = 10
+	j_max = 20

@@ -9,15 +9,20 @@
   <!-- RAL 9016 -->
   <!-- RAL 7043 -->
   <!-- links -->
+  <material name="yellow">
+        <color rgba="1.0 0.502 0 1.0"/>
+  </material>
+  <material name="grey">
+        <color rgba="0.741 0.765 0.780 1.0"/>
+  </material>
+
   <link name="base_link">
     <visual>
       <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
       <geometry>
         <mesh filename="package://staubli_tx40_description/meshes/base_link.stl"/>
       </geometry>
-      <material name="">
-        <color rgba="0.0 0.502 1.0 1.0"/>
-      </material>
+      <material name="yellow"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="-0.008 -0.033 0.167"/>
@@ -47,9 +52,7 @@
       <geometry>
         <mesh filename="package://staubli_tx40_description/meshes/link_1.stl"/>
       </geometry>
-      <material name="">
-        <color rgba="0.0 0.502 1.0 1.0"/>
-      </material>
+      <material name="yellow"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0.000 0.020 0.089"/>
@@ -79,9 +82,7 @@
       <geometry>
         <mesh filename="package://staubli_tx40_description/meshes/link_2.stl"/>
       </geometry>
-      <material name="">
-        <color rgba="0.0 0.502 1.0 1.0"/>
-      </material>
+      <material name="yellow"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0.109 -0.002 0.045"/>
@@ -111,9 +112,7 @@
       <geometry>
         <mesh filename="package://staubli_tx40_description/meshes/link_3.stl"/>
       </geometry>
-      <material name="">
-        <color rgba="0.0 0.502 1.0 1.0"/>
-      </material>
+      <material name="yellow"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="-0.006 0.008 -0.050"/>
@@ -143,9 +142,7 @@
       <geometry>
         <mesh filename="package://staubli_tx40_description/meshes/link_4.stl"/>
       </geometry>
-      <material name="">
-        <color rgba="0.0 0.502 1.0 1.0"/>
-      </material>
+      <material name="yellow"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0.002 0.004 0.081"/>
@@ -175,9 +172,7 @@
       <geometry>
         <mesh filename="package://staubli_tx40_description/meshes/link_5.stl"/>
       </geometry>
-      <material name="">
-        <color rgba="0.102 0.549 1.000 1.0"/>
-      </material>
+      <material name="grey"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0.003 0.000 -0.001"/>
@@ -207,9 +202,7 @@
       <geometry>
         <mesh filename="package://staubli_tx40_description/meshes/link_6.stl"/>
       </geometry>
-      <material name="">
-        <color rgba="0.102 0.549 1.000 1.0"/>
-      </material>
+      <material name="grey"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0.000 0.000 0.042"/>

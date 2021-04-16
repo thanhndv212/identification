@@ -1,0 +1,513 @@
+26-Mar-2021 15:05:41
+\adoc\dycaro\tx40_irccyn/filtres/irccyn_drv/
+                    
+vide_1a6_100_0_1_drv
+ 
+tolerance_zero = 0.001
+tolerance_qr = 0.02
+ 
+Parametres elimines: 11
+mz2 
+xx7 
+xy7 
+xz7 
+yy7 
+yz7 
+zz7 
+mx7 
+my7 
+mz7 
+m7  
+ 
+Parametres regroupes: 15
+ia1 
+yy2 
+ia2 
+yy3 
+mz3 
+m3  
+yy4 
+mz4 
+m4  
+yy5 
+mz5 
+m5  
+yy6 
+mz6 
+m6  
+ 
+Parametres de base: 61
+zz1R = zz1  + ia1  + yy2  + yy3  + 0.07*mz3  + 0.05185*m3   + 0.05185*m4   + 0.05185*m5   + 0.05185*m6  
+fv1 
+fs1 
+off1
+xx2R = xx2  - yy2  - 0.050625*m3   - 0.050625*m4   - 0.050625*m5   - 0.050625*m6  
+xy2 
+xz2R = xz2  - 0.225*mz3  - 0.007875*m3   - 0.007875*m4   - 0.007875*m5   - 0.007875*m6  
+yz2 
+zz2R = zz2  + ia2  + 0.050625*m3   + 0.050625*m4   + 0.050625*m5   + 0.050625*m6  
+mx2R = mx2  + 0.225*m3   + 0.225*m4   + 0.225*m5   + 0.225*m6  
+my2 
+fv2 
+fs2 
+off2
+xx3R = xx3  - yy3  + yy4  + 0.45*mz4  + 0.050625*m4   + 0.050625*m5   + 0.050625*m6  
+xy3 
+xz3 
+yz3 
+zz3R = zz3  + yy4  + 0.45*mz4  + 0.050625*m4   + 0.050625*m5   + 0.050625*m6  
+mx3 
+my3R = my3  - mz4  - 0.225*m4   - 0.225*m5   - 0.225*m6  
+ia3 
+fv3 
+fs3 
+off3
+xx4R = xx4  - yy4  + yy5 
+xy4 
+xz4 
+yz4 
+zz4R = zz4  + yy5 
+mx4 
+my4R = my4  + mz5 
+ia4 
+fv4 
+fs4 
+off4
+xx5R = xx5  - yy5  + yy6 
+xy5 
+xz5 
+yz5 
+zz5R = zz5  + yy6 
+mx5 
+my5R = my5  - mz6 
+ia5 
+fv5 
+fs5 
+off5
+xx6R = xx6  - yy6 
+xy6 
+xz6 
+yz6 
+zz6 
+mx6 
+my6 
+ia6 
+fv6 
+fs6 
+off6
+iam6
+fvm6
+fsm6
+
+irccyn_drv/vide_1a6_100_0_1_drv
+Paramètres de filtrage des signaux mesurés
+Fréquence acquisition des signaux mesurés=5000 Hz
+Sous échantillonnage des signaux mesurés=1/1 échantillons
+Fréquence échantillonnage des signaux mesurés=5000 Hz
+ordre du filtre médian pour élimination données aberrantes=3
+ordre du filtre de butterworth=4
+fréquence de coupure du Butterworth:(0.8*fe/2/(odmf=20))=100 Hz
+
+paramètres de calcul des matrices Y et W élémentaires
+seuil vitesse=vit_admissible*(coef_seuil_vitesse= 0.01)
+filtrage médian pour frottement sec ordre : 11
+filtrage parallele par decimate ordre : 100
+soit une frequence de coupure : 20 Hz
+
+MC pondere
+Parametres de base : 61
+
+par		     xb			     2sx		 sxr(%)
+zz1R	+1.24e+00		+2.76e-02		1.1115
+fv1 	+8.05e+00		+1.09e-01		0.6769
+fs1 	+7.14e+00		+3.19e-01		2.2356
+off1	+3.92e-01		+1.71e-01		21.8748
+xx2R	-4.66e-01		+2.41e-02		2.5875
+xy2 	+3.58e-03		+1.23e-02		171.7591
+xz2R	-1.60e-01		+1.32e-02		4.1141
+yz2 	+3.31e-03		+9.89e-03		149.3633
+zz2R	+1.08e+00		+2.18e-02		1.0119
+mx2R	+2.22e+00		+1.08e-01		2.4256
+my2 	+1.36e-01		+8.99e-02		32.9494
+fv2 	+5.53e+00		+1.15e-01		1.0416
+fs2 	+8.26e+00		+2.79e-01		1.6916
+off2	+1.37e+00		+1.22e+00		44.5933
+xx3R	+1.27e-01		+2.27e-02		8.9567
+xy3 	+6.39e-04		+1.27e-02		990.9884
+xz3 	-3.72e-03		+1.39e-02		186.9976
+yz3 	+5.99e-03		+8.22e-03		68.6018
+zz3R	+1.07e-01		+1.75e-02		8.1704
+mx3 	+7.86e-02		+5.03e-02		31.9877
+my3R	-6.01e-01		+2.54e-02		2.1079
+ia3 	+9.88e-02		+1.43e-02		7.2114
+fv3 	+1.97e+00		+6.54e-02		1.6612
+fs3 	+6.34e+00		+2.16e-01		1.7063
+off3	+3.26e-01		+4.13e-01		63.2178
+xx4R	+4.64e-03		+9.62e-03		103.6509
+xy4 	-6.87e-03		+4.12e-03		30.0017
+xz4 	-1.78e-03		+4.72e-03		132.0915
+yz4 	-5.99e-03		+4.74e-03		39.5343
+zz4R	+1.16e-03		+5.02e-03		216.3227
+mx4 	-2.19e-02		+1.03e-02		23.3969
+my4R	-7.26e-03		+1.12e-02		77.0029
+ia4 	+3.13e-02		+4.47e-03		7.1472
+fv4 	+1.11e+00		+3.12e-02		1.4061
+fs4 	+2.48e+00		+1.13e-01		2.2869
+off4	-1.02e-01		+5.73e-02		28.1788
+xx5R	+2.93e-03		+4.49e-03		76.8254
+xy5 	+5.50e-04		+2.24e-03		203.3751
+xz5 	+9.98e-04		+2.34e-03		117.1270
+yz5 	+7.16e-04		+2.35e-03		163.8050
+zz5R	+1.09e-03		+4.71e-03		217.0015
+mx5 	-1.53e-03		+9.44e-03		307.6661
+my5R	-3.09e-02		+7.78e-03		12.5921
+ia5 	+4.68e-02		+7.39e-03		7.8959
+fv5 	+1.86e+00		+6.78e-02		1.8268
+fs5 	+3.03e+00		+1.79e-01		2.9482
+off5	-2.88e-02		+1.12e-01		194.4682
+xx6R	-1.36e-03		+1.93e-03		71.0549
+xy6 	-1.64e-06		+1.02e-03		31015.4930
+xz6 	+2.26e-03		+1.33e-03		29.4666
+yz6 	+8.96e-04		+1.24e-03		68.8983
+zz6 	+1.85e-03		+1.67e-03		45.0712
+mx6 	-3.16e-03		+5.26e-03		83.3765
+my6 	-4.98e-03		+5.09e-03		51.0892
+ia6 	+1.05e-02		+2.50e-03		11.8534
+fv6 	+6.50e-01		+2.06e-02		1.5859
+fs6 	+2.82e-01		+1.62e-01		28.7752
+off6	+1.27e-01		+6.27e-02		24.6690
+iam6	+9.64e-03		+2.51e-03		12.9987
+fvm6	+6.16e-01		+1.98e-02		1.6093
+fsm6	+1.95e+00		+1.35e-01		3.4705
+
+Nombre initial d'équations : 2079
+Norme du résidu : 48.7164
+Norme relative du résidu : 0.0604062
+Ecart-type résidu : 1.08446
+Cond(w) = 1650.04
+Cond(PHI) = 91712.5
+paramètre géométrique nominal d3_nominal = 0.225
+paramètre géométrique nominal rl1_nominal = 0
+paramètre géométrique nominal rl3_nominal = 0.035
+paramètre géométrique nominal rl4_nominal = 0.225
+tau_erreur_geometrique = 0
+paramètre géométrique actuel d3 = 0.225
+paramètre géométrique actuel rl1 = 0
+paramètre géométrique actuel rl3 = 0.035
+paramètre géométrique actuel rl4 = 0.225
+
+MC pondere
+ratio_essentiel : 30
+Parametres essentiels : 28
+
+par	     xbe			     2sx		 sxr(%)
+zz1R	+1.28e+00		+1.25e-02		0.4896
+fv1 	+7.99e+00		+1.07e-01		0.6703
+fs1 	+7.36e+00		+3.12e-01		2.1196
+xx2R	-4.94e-01		+1.88e-02		1.9049
+xz2R	-1.60e-01		+1.17e-02		3.6441
+zz2R	+1.08e+00		+1.19e-02		0.5510
+mx2R	+2.17e+00		+2.18e-02		0.5002
+fv2 	+5.49e+00		+1.16e-01		1.0548
+fs2 	+8.33e+00		+2.81e-01		1.6905
+xx3R	+9.47e-02		+1.89e-02		9.9899
+zz3R	+1.30e-01		+1.06e-02		4.0583
+my3R	-5.89e-01		+1.85e-02		1.5744
+ia3 	+8.01e-02		+7.72e-03		4.8181
+fv3 	+1.96e+00		+6.62e-02		1.6853
+fs3 	+6.39e+00		+2.20e-01		1.7226
+mx4 	-1.71e-02		+6.13e-03		17.9481
+ia4 	+3.42e-02		+2.66e-03		3.8876
+fv4 	+1.11e+00		+3.01e-02		1.3577
+fs4 	+2.49e+00		+1.12e-01		2.2579
+my5R	-3.76e-02		+6.41e-03		8.5083
+ia5 	+4.81e-02		+6.00e-03		6.2361
+fv5 	+1.86e+00		+6.73e-02		1.8131
+fs5 	+3.01e+00		+1.77e-01		2.9350
+ia6 	+1.23e-02		+1.94e-03		7.8523
+fv6 	+6.73e-01		+1.85e-02		1.3763
+iam6	+1.10e-02		+2.42e-03		11.0197
+fvm6	+6.09e-01		+1.85e-02		1.5182
+fsm6	+2.09e+00		+8.86e-02		2.1212
+
+Nombre initial d'équations : 2079
+Norme du résidu : 50.5931
+Norme relative du résidu : 0.0627332
+Ecart-type résidu : 1.11714
+Cond(w) = 168.754
+Cond(PHI) = 51.5825
+paramètre géométrique nominal d3_nominal = 0.225
+paramètre géométrique nominal rl1_nominal = 0
+paramètre géométrique nominal rl3_nominal = 0.035
+paramètre géométrique nominal rl4_nominal = 0.225
+tau_erreur_geometrique = 0
+paramètre géométrique actuel d3 = 0.225
+paramètre géométrique actuel rl1 = 0
+paramètre géométrique actuel rl3 = 0.035
+paramètre géométrique actuel rl4 = 0.225
+
+
+
+Pour Vincent :
+Identification avec erreur de 400% sur les paramètres géométriques
+
+03-Jul-2020 15:49:07
+\adoc\dycaro\tx40_irccyn/filtres/irccyn_drv/
+                    
+vide_1a6_100_0_1_drv
+ 
+tolerance_zero = 0.001
+tolerance_qr = 0.02
+ 
+Parametres elimines: 11
+mz2 
+xx7 
+xy7 
+xz7 
+yy7 
+yz7 
+zz7 
+mx7 
+my7 
+mz7 
+m7  
+ 
+Parametres regroupes: 15
+ia1 
+yy2 
+ia2 
+yy3 
+mz3 
+m3  
+yy4 
+mz4 
+m4  
+yy5 
+mz5 
+m5  
+yy6 
+mz6 
+m6  
+ 
+Parametres de base: 61
+zz1R = zz1  + ia1  + yy2  + yy3  + 0.35*mz3  + 1.2962*m3   + 1.2962*m4   + 1.2962*m5   + 1.2962*m6  
+fv1 
+fs1 
+off1
+xx2R = xx2  - yy2  - 1.2656*m3   - 1.2656*m4   - 1.2656*m5   - 1.2656*m6  
+xy2 
+xz2R = xz2  - 1.125*mz3  - 0.19688*m3   - 0.19687*m4   - 0.19687*m5   - 0.19687*m6  
+yz2 
+zz2R = zz2  + ia2  + 1.2656*m3   + 1.2656*m4   + 1.2656*m5   + 1.2656*m6  
+mx2R = mx2  + 1.125*m3   + 1.125*m4   + 1.125*m5   + 1.125*m6  
+my2 
+fv2 
+fs2 
+off2
+xx3R = xx3  - yy3  + yy4  + 2.25*mz4  + 1.2656*m4   + 1.2656*m5   + 1.2656*m6  
+xy3 
+xz3 
+yz3 
+zz3R = zz3  + yy4  + 2.25*mz4  + 1.2656*m4   + 1.2656*m5   + 1.2656*m6  
+mx3 
+my3R = my3  - mz4  - 1.125*m4   - 1.125*m5   - 1.125*m6  
+ia3 
+fv3 
+fs3 
+off3
+xx4R = xx4  - yy4  + yy5 
+xy4 
+xz4 
+yz4 
+zz4R = zz4  + yy5 
+mx4 
+my4R = my4  + mz5 
+ia4 
+fv4 
+fs4 
+off4
+xx5R = xx5  - yy5  + yy6 
+xy5 
+xz5 
+yz5 
+zz5R = zz5  + yy6 
+mx5 
+my5R = my5  - mz6 
+ia5 
+fv5 
+fs5 
+off5
+xx6R = xx6  - yy6 
+xy6 
+xz6 
+yz6 
+zz6 
+mx6 
+my6 
+ia6 
+fv6 
+fs6 
+off6
+iam6
+fvm6
+fsm6
+
+irccyn_drv/vide_1a6_100_0_1_drv
+Paramètres de filtrage des signaux mesurés
+Fréquence acquisition des signaux mesurés=5000 Hz
+Sous échantillonnage des signaux mesurés=1/1 échantillons
+Fréquence échantillonnage des signaux mesurés=5000 Hz
+ordre du filtre médian pour élimination données aberrantes=3
+ordre du filtre de butterworth=4
+fréquence de coupure du Butterworth:(0.8*fe/2/(odmf=20))=100 Hz
+
+paramètres de calcul des matrices Y et W élémentaires
+seuil vitesse=vit_admissible*(coef_seuil_vitesse= 0.01)
+filtrage médian pour frottement sec ordre : 11
+filtrage parallele par decimate ordre : 100
+soit une frequence de coupure : 20 Hz
+
+MC pondere
+Parametres de base : 61
+
+par		     xb			     2sx		 sxr(%)
+zz1R	+1.18e+00		+4.99e-02		2.1198
+fv1 	+8.01e+00		+1.19e-01		0.7415
+fs1 	+7.26e+00		+3.46e-01		2.3851
+off1	+3.78e-01		+1.84e-01		24.3293
+xx2R	-4.47e-01		+3.62e-02		4.0440
+xy2 	+3.31e-02		+1.38e-02		20.8034
+xz2R	-1.75e-01		+1.54e-02		4.3970
+yz2 	+2.65e-02		+1.14e-02		21.4416
+zz2R	+9.92e-01		+3.19e-02		1.6060
+mx2R	+2.19e+00		+1.37e-01		3.1303
+my2 	-1.57e-01		+1.10e-01		35.0690
+fv2 	+5.52e+00		+1.41e-01		1.2808
+fs2 	+8.04e+00		+3.42e-01		2.1249
+off2	+6.57e-01		+1.41e+00		107.0264
+xx3R	+2.84e-01		+3.51e-02		6.1833
+xy3 	-6.95e-03		+1.69e-02		121.4533
+xz3 	+8.62e-03		+1.67e-02		96.8355
+yz3 	-1.18e-02		+1.05e-02		44.3705
+zz3R	+1.59e-01		+2.75e-02		8.6567
+mx3 	+4.02e-02		+2.10e-02		26.1191
+my3R	-1.39e-01		+1.08e-02		3.8735
+ia3 	+1.31e-01		+2.50e-02		9.5263
+fv3 	+2.08e+00		+1.08e-01		2.5982
+fs3 	+6.09e+00		+3.57e-01		2.9352
+off3	+8.41e-01		+2.70e-01		16.0808
+xx4R	+6.37e-03		+1.22e-02		95.8354
+xy4 	+5.38e-04		+5.15e-03		479.0293
+xz4 	-1.19e-03		+5.51e-03		230.7890
+yz4 	+1.26e-03		+5.74e-03		227.2261
+zz4R	-2.49e-03		+5.61e-03		112.3944
+mx4 	-6.17e-03		+3.21e-03		25.9694
+my4R	+3.63e-03		+3.14e-03		43.2831
+ia4 	+3.40e-02		+4.91e-03		7.2286
+fv4 	+1.11e+00		+3.47e-02		1.5604
+fs4 	+2.47e+00		+1.24e-01		2.5178
+off4	-6.74e-02		+6.41e-02		47.5527
+xx5R	+4.09e-03		+5.02e-03		61.3986
+xy5 	+9.58e-04		+2.48e-03		129.3099
+xz5 	+1.02e-03		+2.71e-03		132.8251
+yz5 	+1.90e-03		+2.66e-03		69.8714
+zz5R	+4.28e-03		+5.55e-03		64.8566
+mx5 	+2.62e-03		+2.77e-03		52.9420
+my5R	-9.53e-03		+2.59e-03		13.6066
+ia5 	+4.74e-02		+8.42e-03		8.8856
+fv5 	+1.89e+00		+7.30e-02		1.9349
+fs5 	+2.94e+00		+1.93e-01		3.2794
+off5	-7.12e-02		+1.14e-01		80.0709
+xx6R	-1.15e-03		+2.17e-03		94.2898
+xy6 	+2.77e-04		+1.13e-03		204.1856
+xz6 	+3.52e-03		+1.46e-03		20.7091
+yz6 	+2.70e-04		+1.35e-03		249.2418
+zz6 	+2.74e-03		+1.86e-03		33.9083
+mx6 	-3.95e-04		+1.48e-03		188.0157
+my6 	-1.71e-03		+1.49e-03		43.6821
+ia6 	+9.72e-03		+2.73e-03		14.0540
+fv6 	+6.50e-01		+2.22e-02		1.7061
+fs6 	+3.13e-01		+1.74e-01		27.6924
+off6	+1.15e-01		+6.68e-02		28.9477
+iam6	+9.31e-03		+2.71e-03		14.5775
+fvm6	+6.18e-01		+2.12e-02		1.7163
+fsm6	+1.91e+00		+1.45e-01		3.7872
+
+Nombre initial d'équations : 2079
+Norme du résidu : 52.7311
+Norme relative du résidu : 0.0699037
+Ecart-type résidu : 1.17383
+Cond(w) = 1714.69
+Cond(PHI) = 1322.46
+paramètre géométrique nominal d3_nominal = 0.225
+paramètre géométrique nominal rl1_nominal = 0
+paramètre géométrique nominal rl3_nominal = 0.035
+paramètre géométrique nominal rl4_nominal = 0.225
+tau_erreur_geometrique = 400
+paramètre géométrique actuel d3 = 1.125
+paramètre géométrique actuel rl1 = 0
+paramètre géométrique actuel rl3 = 0.175
+paramètre géométrique actuel rl4 = 1.125
+
+MC pondere
+ratio_essentiel : 30
+Parametres essentiels : 29
+
+par	     xbe			     2sx		 sxr(%)
+zz1R	+1.25e+00		+1.39e-02		0.5568
+fv1 	+7.94e+00		+1.15e-01		0.7256
+fs1 	+7.46e+00		+3.36e-01		2.2486
+xx2R	-5.04e-01		+2.10e-02		2.0793
+xz2R	-1.74e-01		+1.34e-02		3.8288
+zz2R	+1.03e+00		+2.21e-02		1.0748
+mx2R	+2.18e+00		+3.76e-02		0.8645
+my2 	-2.00e-01		+6.48e-02		16.2050
+fv2 	+5.49e+00		+1.42e-01		1.2975
+fs2 	+8.06e+00		+3.47e-01		2.1546
+xx3R	+2.25e-01		+2.29e-02		5.0887
+zz3R	+2.03e-01		+1.39e-02		3.4087
+my3R	-1.35e-01		+6.63e-03		2.4505
+ia3 	+9.02e-02		+1.21e-02		6.7348
+fv3 	+2.09e+00		+1.10e-01		2.6404
+fs3 	+6.09e+00		+3.66e-01		3.0013
+off3	+5.75e-01		+2.14e-01		18.6425
+ia4 	+3.33e-02		+2.90e-03		4.3580
+fv4 	+1.12e+00		+3.33e-02		1.4900
+fs4 	+2.50e+00		+1.23e-01		2.4611
+my5R	-1.03e-02		+2.21e-03		10.7189
+ia5 	+5.20e-02		+6.47e-03		6.2196
+fv5 	+1.88e+00		+7.22e-02		1.9236
+fs5 	+2.93e+00		+1.90e-01		3.2519
+ia6 	+1.23e-02		+2.09e-03		8.4600
+fv6 	+6.75e-01		+1.99e-02		1.4751
+iam6	+1.09e-02		+2.60e-03		11.8675
+fvm6	+6.12e-01		+1.99e-02		1.6233
+fsm6	+2.07e+00		+9.53e-02		2.3011
+
+Nombre initial d'équations : 2079
+Norme du résidu : 54.8061
+Norme relative du résidu : 0.0726544
+Ecart-type résidu : 1.21046
+Cond(w) = 199.209
+Cond(PHI) = 49.4526
+paramètre géométrique nominal d3_nominal = 0.225
+paramètre géométrique nominal rl1_nominal = 0
+paramètre géométrique nominal rl3_nominal = 0.035
+paramètre géométrique nominal rl4_nominal = 0.225
+tau_erreur_geometrique = 400
+paramètre géométrique actuel d3 = 1.125
+paramètre géométrique actuel rl1 = 0
+paramètre géométrique actuel rl3 = 0.175
+paramètre géométrique actuel rl4 = 1.125 
+
+Influence des erreurs sur les paramètres géométriques :
+
+Norme relative du résidu avec paramètres nominaux : 0.0627332
+Norme relative du résidu avec erreur de 400% : 0.0726544
+
+une erreur de 400% sur les paramètres géométriques
+augmente l'erreur relative du résidu de seulement 1%!!!
+Bien sûr les paramètres inertiels sont faux car les moindres carrés 
+compensent les erreurs géométriques, 
+mais c'est sans influence sur la prédiction du modèle dynamique.
+
