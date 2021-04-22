@@ -9,7 +9,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from numpy.linalg import norm, solve
 from pinocchio.utils import *
-from scipy import linalg
+from scipy import linalg, signal
 import os
 from os.path import dirname, join, abspath
 import pandas as pd 

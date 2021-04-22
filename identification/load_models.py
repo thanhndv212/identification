@@ -81,8 +81,12 @@ def test_trajectory():
 	red = np.array([1/32, 1/32, 1/45, -1/48, 1/45, 1/32])
 	for i in range(6):
 		Q[:,i] *= red[i]
+	# Q[:,1] += np.pi/2
+	# Q[:,2] += -np.pi/2
+	# Q[:,5] += -np.pi
+
 	return Q
-robot = loadModels("staubli_tx40_description", "tx40.urdf")
+robot = loadModels("staubli_tx40_description", "tx40_mdh_zero.urdf")
 # robot = loadModels("2DOF_description", "2DOF_description.urdf")
 
-visualization(robot,False)
+visualization(robot,True)
