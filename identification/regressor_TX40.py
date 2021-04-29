@@ -70,6 +70,62 @@ def standardParameters(njoints,fv,fs,Ia,off,Iam6,fvm6,fsm6):
 	params_std = dict(zip(params, phi)) 
 	return params_std
 
+def standardParameters_modified(njoints,fv,fs,Ia,off,Iam6,fvm6,fsm6):
+	"""This function prints out the standard inertial parameters obtained from 3D design.
+		Note: a flag IsFrictioncld to include in standard parameters
+		Input: 	njoints: number of joints
+		Output: params_std: a dictionary of parameter names and their values"""
+	params_name = ['Ixx','Ixy','Ixz','Iyy','Iyz','Izz','mx','my','mz','m']
+	phi = []
+	params = []
+	#TODO: change order of values in phi['m', 'mx','my','mz','Ixx','Ixy','Iyy','Ixz', 'Iyz','Izz'] 
+	#corresponding to params_name ['Ixx','Ixy','Ixz','Iyy','Iyz','Izz','mx','my','mz','m']
+	for i in range(1,njoints):
+		P = model.inertias[i].toDynamicParameters()
+		if i == 1:
+			print("dynamic of link 1: ",P)
+		P_mod = np.zeros(P.shape[0])
+		P_mod[9] = P[0] #m
+		P_mod[8] = P[3] #mz
+		P_mod[7] = P[2] #my
+		P_mod[6] = P[1] #mx
+		P_mod[5] = P[9] #Izz
+		P_mod[4] = P[8] #Iyz
+		P_mod[3] = P[6] #Iyy
+		P_mod[2] = P[7] #Ixz
+		P_mod[1] = P[5] #Ixy
+		P_mod[0] = P[4] #Ixx
+		for k in P_mod: 
+			phi.append(k)
+		phi.extend([Ia[i-1]])
+		phi.extend([fv[i-1],fs[i-1]])
+		phi.extend([off[i-1]])
+		for j in params_name: 
+			if not isFext:
+				params.append(j + str(i))
+			else:
+				params.append(j + str(i-1))
+		params.extend(['Ia' + str(i)])
+		params.extend(['fv' + str(i),'fs' + str(i)])
+		params.extend(['off' + str(i)])
+	####
+	# if isFrictionincld:
+	# 	for k in range(1, njoints):
+	# 		phi.extend([fv[k-1],fs[k-1]])
+	# 		params.extend(['fv' + str(k),'fs' + str(k)])
+	# if isActuator_int:
+	# 	for k in range(1,njoints):
+	# 		phi.extend([Ia[k-1]])
+	# 		params.extend(['Ia' + str(k)])
+	# if isOffset:
+	# 	for k in range(1,njoints):
+	# 		phi.extend([off[k-1]])
+	# 		params.extend(['off' + str(k)])
+	if isCoupling:
+		phi.extend([Iam6,fvm6,fsm6])
+		params.extend(['Iam6','fvm6','fsm6'])
+	params_std = dict(zip(params, phi)) 
+	return params_std
 #generate waypoints 
 def generateWaypoints(N,nq,nv,mlow,mhigh): 
 	"""This function generates N random values for joints' position,velocity, acceleration.
@@ -119,6 +175,36 @@ def build_regressor_basic(model, data, N, nq, nv, njoints, q, v, a):
 		for j in range(W_temp.shape[0]):
 			W[j*N + i, :] = W_temp[j,:]
 	return W
+def build_regressor_basic_modified(model, data, N, nq, nv, njoints, q, v, a):
+	#TODO: reorgnize columns from ['m', 'mx','my','mz','Ixx','Ixy','Iyy','Ixz', 'Iyz','Izz']
+	# to ['Ixx','Ixy','Ixz','Iyy','Iyz','Izz','mx','my','mz','m']
+	W = np.zeros([N*nv, 10*(njoints-1)]) 
+	W_mod = np.zeros([N*nv, 10*(njoints-1)]) 
+	for i in range(N):
+		W_temp = pin.computeJointTorqueRegressor(model, data, q[i,:], v[i,:], a[i,:])
+		for j in range(W_temp.shape[0]):
+			W[j*N + i, :] = W_temp[j,:]
+
+	for k in range(nv):
+		W_mod[:,10*k+ 9] = W[:,10*k+0] #m
+		W_mod[:,10*k+8] = W[:,10*k+3] #mz
+		W_mod[:,10*k+7] = W[:,10*k+2] #my
+		W_mod[:,10*k+6] = W[:,10*k+1] #mx
+		W_mod[:,10*k+5] = W[:,10*k+9] #Izz
+		W_mod[:,10*k+4] = W[:,10*k+8] #Iyz
+		W_mod[:,10*k+3] = W[:,10*k+6] #Iyy
+		W_mod[:,10*k+2] = W[:,10*k+7] #Ixz
+		W_mod[:,10*k+1] = W[:,10*k+5] #Ixy
+		W_mod[:,10*k+0] = W[:,10*k+4] #Ixx
+	return W_mod
+def add_friction(W,model, data, N, nq, nv, njoints, q, v, a):
+	#TODO: break the model modular
+	W = np.c_[W, np.zeros([W.shape[0],2*nv])]
+	for i in range(N):
+		for j in range(nv):
+			W[j*N + i, W.shape[1]+2*j] = v[i,j]
+			W[j*N + i,  W.shape[1]+2*j + 1] = np.sign(v[i,j])
+	pass
 def build_regressor_w_friction(model, data, N, nq, nv, njoints, q, v, a):
 	W = np.zeros([N*nv, 10*(njoints-1) + 2*nv]) 
 	for i in range(N):
@@ -128,8 +214,17 @@ def build_regressor_w_friction(model, data, N, nq, nv, njoints, q, v, a):
 			W[j*N + i, 10*(njoints-1)+2*j] = v[i,j]
 			W[j*N + i, 10*(njoints-1)+2*j + 1] = np.sign(v[i,j])
 	return W
+def add_motor_inertia(W,model, data, N, nq, nv, njoints, q, v, a):
+	#TODO: break the model modular
+	W = np.c_[W, np.zeros([W.shape[0],2*nv])]
+	for i in range(N):
+		for j in range(nv):
+			W[j*N + i, W.shape[1]+ j] = a[i,j]
+			W[j*N + i, W.shape[1]+ nv + j] = 1
+
 def build_regressor_full(model, data, N, nq, nv, njoints, q, v, a):
 	W = np.zeros([N*nv, 10*(njoints-1) + 2*nv+nv+nv]) 
+
 	for i in range(N):
 		W_temp = pin.computeJointTorqueRegressor(model, data, q[i,:], v[i,:], a[i,:])
 		for j in range(W_temp.shape[0]):
@@ -139,6 +234,49 @@ def build_regressor_full(model, data, N, nq, nv, njoints, q, v, a):
 			W[j*N + i, 10*(njoints-1)+2*nv + j] = a[i,j]
 			W[j*N + i, 10*(njoints-1)+2*nv + nv + j] = 1
 	return W
+
+def build_regressor_full_modified(model, data, N, nq, nv, njoints, q, v, a):
+	W = np.zeros([N*nv, 10*(njoints-1) + 2*nv+nv+nv]) 
+
+	for i in range(N):
+		W_temp = pin.computeJointTorqueRegressor(model, data, q[i,:], v[i,:], a[i,:])
+		for j in range(W_temp.shape[0]):
+			W[j*N + i, 0:10*(njoints-1)] = W_temp[j,:]
+			W[j*N + i, 10*(njoints-1)+2*j] = v[i,j]#fv
+			W[j*N + i, 10*(njoints-1)+2*j + 1] = np.sign(v[i,j])#fs
+			W[j*N + i, 10*(njoints-1)+2*nv + j] = a[i,j]#ia
+			W[j*N + i, 10*(njoints-1)+2*nv + nv + j] = 1#off
+	W_mod = np.zeros([N*nv, 10*(njoints-1) + 2*nv+nv+nv]) 
+	# W_mod[:,10*(njoints-1):10*(njoints-1) + 2*nv+nv+nv] = W[:,10*(njoints-1):10*(njoints-1) + 2*nv+nv+nv]
+	# for k in range(nv):
+	# 	print(k)
+	# 	W_mod[:,10*k+ 9] = W[:,10*k+0] #m
+	# 	W_mod[:,10*k+8] = W[:,10*k+3] #mz
+	# 	W_mod[:,10*k+7] = W[:,10*k+2] #my
+	# 	W_mod[:,10*k+6] = W[:,10*k+1] #mx
+	# 	W_mod[:,10*k+5] = W[:,10*k+9] #Izz
+	# 	W_mod[:,10*k+4] = W[:,10*k+8] #Iyz
+	# 	W_mod[:,10*k+3] = W[:,10*k+6] #Iyy
+	# 	W_mod[:,10*k+2] = W[:,10*k+7] #Ixz
+	# 	W_mod[:,10*k+1] = W[:,10*k+5] #Ixy
+	# 	W_mod[:,10*k+0] = W[:,10*k+4] #Ixx
+	#rearrange to Gautier params order [xx,xy,xz,yy,yz,zz,mx,my,mz,m,ia,fv,fs,off]
+	for k in range(nv):
+		W_mod[:,14*k+10] = W[:,10*(njoints-1)+2*nv + k]#ia
+		W_mod[:,14*k+11] = W[:,10*(njoints-1)+2*k]#fv
+		W_mod[:,14*k+12] = W[:,10*(njoints-1)+2*k + 1]#fs
+		W_mod[:,14*k+13] = W[:,10*(njoints-1)+2*nv + nv + k]#off
+		W_mod[:,14*k+ 9] = W[:,10*k+0] #m
+		W_mod[:,14*k+8] = W[:,10*k+3] #mz
+		W_mod[:,14*k+7] = W[:,10*k+2] #my
+		W_mod[:,14*k+6] = W[:,10*k+1] #mx
+		W_mod[:,14*k+5] = W[:,10*k+9] #Izz
+		W_mod[:,14*k+4] = W[:,10*k+8] #Iyz
+		W_mod[:,14*k+3] = W[:,10*k+6] #Iyy
+		W_mod[:,14*k+2] = W[:,10*k+7] #Ixz
+		W_mod[:,14*k+1] = W[:,10*k+5] #Ixy
+		W_mod[:,14*k+0] = W[:,10*k+4] #Ixx
+	return W_mod
 def add_coupling(W,model, data, N, nq, nv, njoints, q, v, a):
 	W = np.c_[W, np.zeros([W.shape[0],3])]
 	for i in range(N):
@@ -147,17 +285,12 @@ def add_coupling(W,model, data, N, nq, nv, njoints, q, v, a):
 				W[j*N + i, -3] = a[i,nv-1]
 				W[j*N + i, -2] = v[i,nv-1]
 				W[j*N + i, -1] = np.sign(v[i,nv-2] + v[i,nv-1])	
-				# W[j*N + i, -3] = -1
-				# W[j*N + i, -2] = -1
-				# W[j*N + i, -1] = -3
 						
 			if j == (nv-1):#joint 6
 				W[j*N + i, -3] = a[i,nv-2]
 				W[j*N + i, -2] = v[i,nv-2]
 				W[j*N + i, -1] = np.sign(v[i,nv-2] + v[i,nv-1])			
-				# W[j*N + i, -3] = -2
-				# W[j*N + i, -2] = -2
-				# W[j*N + i, -1] = -5
+
 	return W
 def get_torque_rand(model, data, N,  nq, nv,njoints, q, v, a, Ia, off, Iam6, fvm6, fsm6):
 	tau = np.zeros(nv*N)
@@ -244,9 +377,10 @@ def QR_pivoting(tau, W_e, params_r):
 				numrank_W: numerical rank of regressor, determined by using a therehold
 				params_rsorted: inertial parameters included in base parameters """
 	
-	Q, R, P = linalg.qr(W_e, pivoting = True) #scipy has QR pivoting
+	Q, R, P = linalg.qr(W_e,pivoting = True) #scipy has QR pivoting using Householder reflection
 	# print(pd.DataFrame(R[0:7,:]).to_latex())
 	# sort params as decreasing order of diagonal of R 
+	
 	params_rsorted = []
 	for i in range(P.shape[0]): 
 		print(i, ": ", params_r[P[i]], "---",abs(np.diag(R)[i]))
@@ -271,18 +405,21 @@ def QR_pivoting(tau, W_e, params_r):
 	R1 = R[0:numrank_W,0:numrank_W]
 	Q1 = Q[:,0:numrank_W]
 	R2 = R[0:numrank_W,numrank_W:R.shape[1]]
-	beta = np.round(np.dot(np.linalg.inv(R1),R2),6)#regrouping coefficient
+
+	beta = np.around(np.dot(np.linalg.inv(R1),R2),6)#regrouping coefficient
 
 	phi_b = np.round(np.dot(np.linalg.inv(R1),np.dot(Q1.T,tau)),6)#values of base params
 	W_b = np.dot(Q1,R1)#base regressor
+
 	params_base = params_rsorted[:numrank_W]
 	params_rgp = params_rsorted[numrank_W:]
 	print('regrouped params: ',params_rgp)
+	tol_beta = 1e-6#for scipy.signal.decimate
 	for i in range(numrank_W):
 		for j in range(beta.shape[1]):
-			if beta[i,j] == 0:	
+			if abs(beta[i,j]) < tol_beta:	
 				params_base[i] = params_base[i]
-			elif beta[i,j] < 0:
+			elif beta[i,j] < -tol_beta:
 				params_base[i] = params_base[i] + ' - '+str(abs(beta[i,j])) + '*'+ str(params_rgp[j])
 			else:
 				params_base[i] = params_base[i] + ' + '+str(abs(beta[i,j])) + '*'+ str(params_rgp[j])
@@ -299,6 +436,86 @@ def QR_pivoting(tau, W_e, params_r):
 # by specifying an option from the command line:
 # GepettoVisualizer: -g
 # MeshcatVisualizer: -m
+def double_QR(tau,W_e, params_r):
+	Q, R = np.linalg.qr(W_e) #scipy has QR pivoting using Householder reflection
+	# print(pd.DataFrame(R[0:7,:]).to_latex())
+	# sort params as decreasing order of diagonal of R 
+	assert np.diag(R).shape[0] ==len(params_r), "params_r does not have same length with R"
+	for i in range(np.diag(R).shape[0]): 
+		print(i, ": ", params_r[i], "---",abs(np.diag(R)[i]))
+	idx_base = []
+	idx_regroup = []
+	#find rank of regressor
+	epsilon = np.finfo(float).eps# machine epsilon
+	# tolpal = W_e.shape[0]*abs(np.diag(R).max())*epsilon#rank revealing tolerance
+	tolpal = 0.02
+	for i in range(len(params_r)):
+		if abs(np.diag(R)[i]) > tolpal:
+			# print(abs(np.diag(R)[i]))
+			idx_base.append(i)
+		else:
+			# print(abs(np.diag(R)[i]))
+			idx_regroup.append(i)
+	
+	numrank_W = len(idx_base)
+	print("rank of base regressor: ", numrank_W)
+
+	#rebuild W and params after sorted
+	W1 = np.zeros([W_e.shape[0],len(idx_base)])
+	W2 = np.zeros([W_e.shape[0],len(idx_regroup)])
+	params_base = []
+	params_regroup = []
+	for i in range(len(idx_base)):
+		W1[:,i] = W_e[:,idx_base[i]]
+		params_base.append(params_r[idx_base[i]])
+	for j in range(len(idx_regroup)):
+		W2[:,j] = W_e[:,idx_regroup[j]]
+		params_regroup.append(params_r[idx_regroup[j]])
+	
+	W_regrouped = np.c_[W1,W2]
+	#perform QR on regrouped regressor
+	Q_r, R_r = np.linalg.qr(W_regrouped)
+
+	
+	R1 = R_r[0:numrank_W,0:numrank_W]
+	Q1 = Q_r[:,0:numrank_W]
+	R2 = R_r[0:numrank_W,numrank_W:R.shape[1]]
+
+	beta = np.around(np.dot(np.linalg.inv(R1),R2),6)#regrouping coefficient
+
+	phi_b = np.round(np.dot(np.linalg.inv(R1),np.dot(Q1.T,tau)),6)#values of base params
+	W_b = np.dot(Q1,R1)#base regressor
+
+	print('regrouped params: ',params_regroup)
+	tol_beta = 1e-4#for scipy.signal.decimate
+	for i in range(numrank_W):
+		for j in range(beta.shape[1]):
+			if abs(beta[i,j]) < tol_beta:	
+				params_base[i] = params_base[i]
+			elif beta[i,j] < -tol_beta:
+				params_base[i] = params_base[i] + ' - '+str(abs(beta[i,j])) + '*'+ str(params_regroup[j])
+			else:
+				params_base[i] = params_base[i] + ' + '+str(abs(beta[i,j])) + '*'+ str(params_regroup[j])
+	
+	# print('base parameters and their identified values: ')
+	base_parameters = dict(zip(params_base,phi_b))
+	# table = [params_base, phi_b]
+	# print(tabulate(table))
+	return W_b, base_parameters, params_base, phi_b
+
+def relative_stdev(W_b, phi_b,tau):
+	#stdev of residual error ro 
+	sig_ro_sqr = np.linalg.norm((tau - np.dot(W_b,phi_b)),ord=2)**2/(W_b.shape[0]-phi_b.shape[0])
+	#covariance matrix of estimated parameters
+	C_x = sig_ro_sqr*np.linalg.inv(np.dot(W_b.T,W_b))
+	#relative stdev of estimated parameters
+	std_x_sqr = np.diag(C_x)
+	print(std_x_sqr.shape)
+	std_xr = np.zeros(std_x_sqr.shape[0])
+	for i in range(std_x_sqr.shape[0]):
+		std_xr[i] = np.round(100*np.sqrt(std_x_sqr[i])/np.abs(phi_b[i]),2)
+	return std_xr  
+
 
 def visualization(robot): 
 	VISUALIZER = None
@@ -367,7 +584,7 @@ fvm6 = 6.16e-1
 fsm6 = 1.95e0
 
 #load robot
-robot = loadModels("staubli_tx40_description", "tx40_mdh.urdf")
+robot = loadModels("staubli_tx40_description", "tx40_mdh_modified.urdf")
 # robot = loadModels("2DOF_description", "2DOF_description.urdf")
 # robot = loadModels("SC_3DOF", "3DOF.urdf")
 model = robot.model
@@ -377,7 +594,8 @@ nq, nv , njoints = model.nq, model.nv, model.njoints
 
 
 if __name__ == '__main__':
-	params_std = standardParameters(njoints,fv,fs,Ia,off,Iam6,fvm6,fsm6)
+	# params_std = standardParameters(njoints,fv,fs,Ia,off,Iam6,fvm6,fsm6)
+	params_std = standardParameters_modified(njoints,fv,fs,Ia,off,Iam6,fvm6,fsm6)
 	table_stdparams = pd.DataFrame(params_std.items(), columns = ["Standard Parameters", "Value"])
 	print(table_stdparams)
 
@@ -432,7 +650,7 @@ if __name__ == '__main__':
 	qd = dq
 	qdd = ddq
 
-	W= build_regressor_full(model, data, N,  nq, nv,njoints, q, qd, qdd)
+	W= build_regressor_full_modified(model, data, N,  nq, nv,njoints, q, qd, qdd)
 	# print(W.shape)
 	W = add_coupling(W,model, data, N,  nq, nv,njoints, q, qd, qdd)
 	print(W.shape)
@@ -460,64 +678,76 @@ if __name__ == '__main__':
 	tau = tau_data
 	# tau = tau_cal
 
+	#choose 1 out of 2 filters below
 	#low pass butter filtering on tau and columns of W
 	# b,a = signal.butter(4,100/2500, 'low')
 	
 	#chebyshev I lowpass
-	b,a = signal.cheby1(100,5,100,'low',fs=5000, output='ba')
+	# b,a = signal.cheby1(10,1,40,'low',fs=5000, output='ba')
 
 	#forward-backward filter to prevent phase shift
-	for j in range(W.shape[1]):
-		W[:,j] = signal.filtfilt(b,a,W[:,j])
-	tau = signal.filtfilt(b,a,tau)
+	# for j in range(W.shape[1]):
+	# 	W[:,j] = signal.filtfilt(b,a,W[:,j])
+	# tau = signal.filtfilt(b,a,tau)
+	##################################
 
 
-	t = np.linspace(0,1,tau.shape[0])
-	plt.figure()
-	plt.plot(t,tau_data)
-	plt.plot(t,tau)
-	plt.show()
-	#downsampling and identification on exp data
-	
-	N_ = W.shape[0]//100
-	W_ = np.zeros([N_,W.shape[1]])
-	tau_ = np.zeros(N_)
-	for i in range(N_):
-			# print(i)
-		W_[i,:] = W[i*100,:]
-		tau_[i] = tau[i*100]
-	# tau_ = signal.decimate(tau, 5, n=None, zero_phase=True)
-	# tau_ = signal.decimate(tau_, 9, n=None, zero_phase=True)
+	#downsampling on lowpass filtered data
+	# N_ = W.shape[0]//45
+	# W_ = np.zeros([N_,W.shape[1]])
+	# tau_ = np.zeros(N_)
+	# for i in range(N_):
+	# 		# print(i)
+	# 	W_[i,:] = W[i*45,:]
+	# 	tau_[i] = tau[i*45]
 
-	# for i in range(W.shape[1]):
-	# 	Wtemp = signal.decimate(W[:,i], 5, n=10, zero_phase=True)
-	# 	W_[:,i] = signal.decimate(Wtemp, 9, n=10, zero_phase=True)
+	###############decimate by scipy.signal.decimate################# best factor = 25
+	tau_ = signal.decimate(tau,25, zero_phase=True)
+	W_ = np.zeros((tau_.shape[0],W.shape[1]))
+	for i in range(W.shape[1]):
+		W_[:,i] = signal.decimate(W[:,i], 25, zero_phase=True)
+	######################################
+	# t = np.linspace(0,1,tau_data.shape[0])
+	# print(tau_data.shape)
+	# plt.figure()
+	# plt.plot(t,tau_data)
+	# t_ = np.linspace(0,1,tau_.shape[0])
+	# print(tau_.shape)
+	# plt.plot(t_,tau_)
+	# plt.show()
+	# print(W_.shape)
 
-	print(W_.shape)
 	#elimate and QR decomposition
 	W_e, params_e, params_r = eliminateNonAffecting(W_, 0.001)
-	W_b, base_parameters  = QR_pivoting(tau_, W_e, params_r)
-
-	#identification on random data points
+	# W_b, base_parameters  = QR_pivoting(tau_, W_e, params_r)
+	W_b, base_parameters, params_base, phi_b  = double_QR(tau_, W_e, params_r)
+	std_xr = relative_stdev(W_b, phi_b, tau_)
+	# identification on random data points
 	# print("identification on random data")
 	# N_ = 1000
 	# q_rand , qd_rand, qdd_rand = generateWaypoints(N_, nq, nv, -1, 1)
 	# tau_rand= get_torque_rand(model, data, N_,  nq, nv, njoints, q_rand, qd_rand, qdd_rand, Ia, off, Iam6, fvm6, fsm6)
-	# W_rand	= build_regressor_full(model, data, N_,  nq, nv,njoints, q_rand, qd_rand, qdd_rand)
+	# # W_rand	= build_regressor_full(model, data, N_,  nq, nv,njoints, q_rand, qd_rand, qdd_rand)
+	# W_rand	= build_regressor_full_modified(model, data, N_,  nq, nv,njoints, q_rand, qd_rand, qdd_rand)
+	# print(W_rand.shape)
 	# W_rand 	= add_coupling(W_rand,model, data, N_,  nq, nv,njoints, q_rand, qd_rand, qdd_rand)
-	# # print('W_rand',W_rand[[-4,-3,-2,-1],:])
-	# # print('W_rand size',W_rand.shape)
-	# W_e, params_e, params_r = eliminateNonAffecting(W_rand, 0.001)
-	# W_b, base_parameters  = QR_pivoting(tau_rand, W_e, params_r)
+
+	# W_e, params_e, params_r = eliminateNonAffecting(W_rand, 1e-6)
+	# # W_b, base_parameters  = QR_pivoting(tau_rand, W_e, params_r)
+	# W_b, base_parameters  = double_QR(tau_rand, W_e, params_r)
+
 
 
 	print("eleminanted parameters: ",params_e)
 	print('condition number of base regressor: ',np.linalg.cond(W_b))
+	phi_b_ls = np.around(np.linalg.lstsq(W_b,tau_)[0],6)
 	table_base = pd.DataFrame(base_parameters.items(), columns = ["Base Parameters", "Value"])
-	path_save = join(dirname(dirname(str(abspath(__file__)))),"identification/src/thanh/TX40_bp_mdh.csv")
+	path_save = join(dirname(dirname(str(abspath(__file__)))),"identification/src/thanh/TX40_bp_mdh_rotated_doubleQR_compare.csv")
 	with open(path_save, "w") as output_file:
 		w = csv.writer(output_file)
-		for key, val in base_parameters.items():
-			w.writerow([key, val])
+		for i in range(len(params_base)):
+			w.writerow([params_base[i], phi_b[i], std_xr[i],phi_b_ls[i]])
+		# for key, val in base_parameters.items():
+		# 	w.writerow([key, val])
 
 	

@@ -52,6 +52,7 @@ def visualization(robot,q0):
 		robot.loadViewerModel("pinocchio")
 		if q0:
 			robot.display(robot.q0)
+			print("q0 = ",robot.q0)
 		else:
 			for k in range(q.shape[0]):
 				if k%5 ==0:
@@ -64,6 +65,19 @@ def visualization(robot,q0):
 						time.sleep(dt - elapsed_time)
 				else:
 					continue
+	# com = pin.centerOfMass(robot.model, robot.data, robot.q0)
+	# gui = robot.viewer.gui
+	# gui.addSphere("world/com", 0.01, [1., 0., 0., 1.])
+	# gui.applyConfiguration("world/com", com.tolist() + [0, 0, 0, 1])
+
+	# M = robot.data.oMi[6]
+	# gui.addXYZaxis("world/axis", [0,1,0,0], 0.01, 0.05)
+	# gui.applyConfiguration('world/axis', pin.SE3ToXYZQUATtuple(M))
+	# gui.refresh()
+	# gui = robot.viewer.gui
+	# gui.addSphere("world/com", 0.01, [1., 0., 0., 1.])
+	# gui.applyConfiguration("world/com", com.tolist() + [0, 0, 0, 1])
+
 def test_trajectory():
 	# ts = 0.001
 	# a = 2
@@ -86,7 +100,7 @@ def test_trajectory():
 	# Q[:,5] += -np.pi
 
 	return Q
-robot = loadModels("staubli_tx40_description", "tx40_mdh_zero.urdf")
+robot = loadModels("staubli_tx40_description", "tx40_mdh_modified.urdf")
 # robot = loadModels("2DOF_description", "2DOF_description.urdf")
 
 visualization(robot,True)

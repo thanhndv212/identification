@@ -1,0 +1,26 @@
+,,prof Gautier
+,Izz1 + 1.0*Iyy2 + 0.07*mz3 + 0.05185*m3 + 1.0*Ixx3 + 1.0*Ia1,zz1R = zz1  + ia1  + yy2  + yy3  + 0.07*mz3  + 0.05185*m3     
+,fv1,fv1 
+,fs1,fs1 
+,off1,off1
+,Ixx2 - 1.0*Iyy2 - 0.050625*m3,xx2R = xx2  - yy2  - 0.050625*m3 
+,Ixy2,xy2 
+,Ixz2 - 0.225*mz3 - 0.007875*m3,xz2R = xz2  - 0.225*mz3  - 0.007875*m3  
+,Iyz2,yz2 
+,Ia2 + 1.0*Izz2 + 0.050625*m3,zz2R = zz2  + ia2  + 0.050625*m3   
+,mx2 + 0.225*m3,mx2R = mx2  + 0.225*m3   
+,my2,my2 
+,fv2,fv2 
+,fs2,fs2 
+,off2,off2
+,Iyy3 - 1.0*Ixx3,xx3R = xx3  - yy3  
+,Ixy3,xy3 
+,Ixz3,xz3 
+,Iyz3,yz3 
+,Izz3,zz3R = zz3  
+,mx3,mx3 
+,my3,my3R = my3  
+,Ia3,ia3 
+,fv3,fv3 
+,fs3,fs3 
+,off3,off3
