@@ -2,7 +2,6 @@ import pinocchio as pin
 from pinocchio.robot_wrapper import RobotWrapper
 from pinocchio.visualize import (GepettoVisualizer, MeshcatVisualizer)
 from sys import argv
-# from tabulate import tabulate
 import time
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -88,8 +87,6 @@ def standardParameters_modified(njoints, fv, fs, Ia, off, Iam6, fvm6, fsm6):
     # corresponding to params_name ['Ixx','Ixy','Ixz','Iyy','Iyz','Izz','mx','my','mz','m']
     for i in range(1, njoints):
         P = model.inertias[i].toDynamicParameters()
-        if i == 1:
-            print("dynamic of link 1: ", P)
         P_mod = np.zeros(P.shape[0])
         P_mod[9] = P[0]  # m
         P_mod[8] = P[3]  # mz
@@ -114,19 +111,7 @@ def standardParameters_modified(njoints, fv, fs, Ia, off, Iam6, fvm6, fsm6):
         params.extend(['Ia' + str(i)])
         params.extend(['fv' + str(i), 'fs' + str(i)])
         params.extend(['off' + str(i)])
-    ####
-    # if isFrictionincld:
-    #   for k in range(1, njoints):
-    #       phi.extend([fv[k-1],fs[k-1]])
-    #       params.extend(['fv' + str(k),'fs' + str(k)])
-    # if isActuator_int:
-    #   for k in range(1,njoints):
-    #       phi.extend([Ia[k-1]])
-    #       params.extend(['Ia' + str(k)])
-    # if isOffset:
-    #   for k in range(1,njoints):
-    #       phi.extend([off[k-1]])
-    #       params.extend(['off' + str(k)])
+
     if isCoupling:
         phi.extend([Iam6, fvm6, fsm6])
         params.extend(['Iam6', 'fvm6', 'fsm6'])
@@ -274,20 +259,6 @@ def build_regressor_full_modified(model, data, N, nq, nv, njoints, q, v, a):
             W[j * N + i, 10 * nv + 2 * nv + j] = a[i, j]  # ia
             W[j * N + i, 10 * nv + 2 * nv + nv + j] = 1  # off
     W_mod = np.zeros([N * nv, 10 * nv + 2 * nv + nv + nv])
-    # W_mod[:,10*(njoints-1):10*(njoints-1) + 2*nv+nv+nv] = W[:,10*(njoints-1):10*(njoints-1) + 2*nv+nv+nv]
-    # for k in range(nv):
-    #   print(k)
-    #   W_mod[:,10*k+ 9] = W[:,10*k+0] #m
-    #   W_mod[:,10*k+8] = W[:,10*k+3] #mz
-    #   W_mod[:,10*k+7] = W[:,10*k+2] #my
-    #   W_mod[:,10*k+6] = W[:,10*k+1] #mx
-    #   W_mod[:,10*k+5] = W[:,10*k+9] #Izz
-    #   W_mod[:,10*k+4] = W[:,10*k+8] #Iyz
-    #   W_mod[:,10*k+3] = W[:,10*k+6] #Iyy
-    #   W_mod[:,10*k+2] = W[:,10*k+7] #Ixz
-    #   W_mod[:,10*k+1] = W[:,10*k+5] #Ixy
-    #   W_mod[:,10*k+0] = W[:,10*k+4] #Ixx
-    # rearrange to Gautier params order [xx,xy,xz,yy,yz,zz,mx,my,mz,m,ia,fv,fs,off]
     for k in range(nv):
         W_mod[:, 14 * k + 10] = W[:, 10 * nv + 2 * nv + k]  # ia
         W_mod[:, 14 * k + 11] = W[:, 10 * nv + 2 * k]  # fv
@@ -309,14 +280,14 @@ def build_regressor_full_modified(model, data, N, nq, nv, njoints, q, v, a):
 def add_coupling(W, model, data, N, nq, nv, njoints, q, v, a):
     W = np.c_[W, np.zeros([W.shape[0], 3])]
     for i in range(N):
-    # joint 5
-        W[4 * N + i, W.shape[1]-3] = a[i, 5]
-        W[4 * N + i, W.shape[1]-2] = v[i, 5]
-        W[4 * N + i, W.shape[1]-1] = np.sign(v[i, 4] + v[i, 5])
+        # joint 5
+        W[4 * N + i, W.shape[1] - 3] = a[i, 5]
+        W[4 * N + i, W.shape[1] - 2] = v[i, 5]
+        W[4 * N + i, W.shape[1] - 1] = np.sign(v[i, 4] + v[i, 5])
     # joint 6
-        W[5 * N + i, W.shape[1]-3] = a[i, 4]
-        W[5 * N + i, W.shape[1]-2] = v[i, 4]
-        W[5 * N + i, W.shape[1]-1] = np.sign(v[i, 4] + v[i, 5])
+        W[5 * N + i, W.shape[1] - 3] = a[i, 4]
+        W[5 * N + i, W.shape[1] - 2] = v[i, 4]
+        W[5 * N + i, W.shape[1] - 1] = np.sign(v[i, 4] + v[i, 5])
 
     return W
 
@@ -418,9 +389,8 @@ def QR_pivoting(tau, W_e, params_r):
 
     # scipy has QR pivoting using Householder reflection
     Q, R, P = linalg.qr(W_e, pivoting=True)
-    # print(pd.DataFrame(R[0:7,:]).to_latex())
-    # sort params as decreasing order of diagonal of R
 
+    # sort params as decreasing order of diagonal of R
     params_rsorted = []
     for i in range(P.shape[0]):
         print(i, ": ", params_r[P[i]], "---", abs(np.diag(R)[i]))
@@ -428,7 +398,7 @@ def QR_pivoting(tau, W_e, params_r):
 
     # find rank of regressor
     numrank_W = 0
-    epsilon = np.finfo(float).eps  # machine epsilon
+    # epsilon = np.finfo(float).eps  # machine epsilon
     # tolpal = W_e.shape[0]*abs(np.diag(R).max())*epsilon#rank revealing tolerance
     tolpal = 0.02
     for i in range(np.diag(R).shape[0]):
@@ -446,12 +416,14 @@ def QR_pivoting(tau, W_e, params_r):
     Q1 = Q[:, 0:numrank_W]
     R2 = R[0:numrank_W, numrank_W:R.shape[1]]
 
+    # regrouping coefficient
     beta = np.around(np.dot(np.linalg.inv(R1), R2),
-                     6)  # regrouping coefficient
+                     6)
 
     # values of base params
     phi_b = np.round(np.dot(np.linalg.inv(R1), np.dot(Q1.T, tau)), 6)
-    W_b = np.dot(Q1, R1)  # base regressor
+    # base regressor
+    W_b = np.dot(Q1, R1)
 
     params_base = params_rsorted[:numrank_W]
     params_rgp = params_rsorted[numrank_W:]
@@ -467,19 +439,8 @@ def QR_pivoting(tau, W_e, params_r):
             else:
                 params_base[i] = params_base[i] + ' + ' + \
                     str(abs(beta[i, j])) + '*' + str(params_rgp[j])
-
-    # print('base parameters and their identified values: ')
     base_parameters = dict(zip(params_base, phi_b))
-    # table = [params_base, phi_b]
-    # print(tabulate(table))
     return W_b, base_parameters
-
-# display
-# If you want to visualize the robot in this example,
-# you can choose which visualizer to employ
-# by specifying an option from the command line:
-# GepettoVisualizer: -g
-# MeshcatVisualizer: -m
 
 
 def double_QR(tau, W_e, params_r):
@@ -528,7 +489,7 @@ def double_QR(tau, W_e, params_r):
     Q1 = Q_r[:, 0:numrank_W]
     R2 = R_r[0:numrank_W, numrank_W:R.shape[1]]
 
-    beta = np.around(np.dot(np.linalg.inv(R1), R2),6)  # regrouping coefficient
+    beta = np.around(np.dot(np.linalg.inv(R1), R2), 6)  # regrouping coefficient
 
     # values of base params
     phi_b = np.round(np.dot(np.linalg.inv(R1), np.dot(Q1.T, tau)), 6)
@@ -562,7 +523,6 @@ def relative_stdev(W_b, phi_b, tau):
     C_x = sig_ro_sqr * np.linalg.inv(np.dot(W_b.T, W_b))
     # relative stdev of estimated parameters
     std_x_sqr = np.diag(C_x)
-    print("standard deviation of params est.: ",std_x_sqr.shape)
     std_xr = np.zeros(std_x_sqr.shape[0])
     for i in range(std_x_sqr.shape[0]):
         std_xr[i] = np.round(100 * np.sqrt(std_x_sqr[i]) / np.abs(phi_b[i]), 2)
@@ -570,6 +530,12 @@ def relative_stdev(W_b, phi_b, tau):
 
 
 def visualization(robot):
+    # If you want to visualize the robot in this example,
+    # you can choose which visualizer to employ
+    # by specifying an option from the command line:
+    # GepettoVisualizer: -g
+    # MeshcatVisualizer: -m
+
     VISUALIZER = None
     if len(argv) > 1:
         opt = argv[1]
@@ -577,21 +543,12 @@ def visualization(robot):
             VISUALIZER = GepettoVisualizer
         elif opt == '-m':
             VISUALIZER = MeshcatVisualizer
-        # else:
-        #    raise ValueError("Unrecognized option: " + opt)
-    # dt = 1e-2
+
     if VISUALIZER:
         robot.setVisualizer(VISUALIZER())
         robot.initViewer()
         robot.loadViewerModel("pinocchio")
         robot.display(robot.q0)
-        # for k in range(q.shape[0]):
-        #   t0 = time.time()
-        #   robot.display(q[k,:])
-        #   t1 = time.time()
-        #   elapsed_time = t1 - t0
-        #   if elapsed_time < dt:
-        #       time.sleep(dt - elapsed_time)
 
 
 def main():
@@ -616,7 +573,6 @@ def main():
     U, S, VT = np.linalg.svd(W_b)
     print('singular values of base regressor:', S)
     visualization(robot)
-    # print(nq, nv)
 
 
 isFext = False
@@ -627,7 +583,6 @@ isCoupling = True
 if len(argv) > 1:
     if argv[1] == '-f':
         isFrictionincld = True
-
 
 fv = np.array([8.05e0, 5.53e0, 1.97e0, 1.11e0, 1.86e0, 6.5e-1])
 fs = np.array([7.14e0, 8.26e0, 6.34e0, 2.48e0, 3.03e0, 2.82e-1])
@@ -661,10 +616,8 @@ if __name__ == '__main__':
     pos_data = pd.read_csv('src/thanh/pos_read_data.csv').to_numpy()
     # Nyquist freq/0.5*sampling rate fs = 0.5 *5 kHz
 
-
     N = pos_data.shape[0]
     y = np.zeros([N, curr_data.shape[1]])
-    # t = np.linspace(0, N - 1, N) * dt
     q = np.zeros([N, pos_data.shape[1]])
 
     y = curr_data
@@ -677,81 +630,61 @@ if __name__ == '__main__':
     N5 = 45
     N6 = 32
 
-    red_diag = np.diag([N1, N2, N3, N4, N5, N6])
-
     # calculate joint position = inv(reduction ration matrix)*motor_encoder_angle
-    red_q = red_diag
+    red_q = np.diag([N1, N2, N3, N4, N5, N6])
     red_q[5, 4] = N6
-    print(red_q)
     q_T = np.dot(np.linalg.inv(red_q), q.T)
     q = q_T.T
+
+    # calibration between joint mdh position and robot measure
     q[:, 1] += -np.pi / 2
     q[:, 2] += np.pi / 2
-    # q[:, 5] += np.pi
+    # q[:, 5] += np.pi #already calibrated in urdf for joint 6
+
+    # median order 3 => butterworth zerophase filtering
     nbutter = 4
     f_butter = 100
     b, a = signal.butter(nbutter, f_butter / 2500, 'low')
     for j in range(q.shape[1]):
-        q[:,j] = signal.medfilt(q[:,j],3)
+        q[:, j] = signal.medfilt(q[:, j], 3)
         q[:, j] = signal.filtfilt(b, a, q[:, j])
-    # calculate vel and acc by derivating data q
+
+    # calculate vel and acc by central difference
     dq = np.zeros([q.shape[0], q.shape[1]])
     ddq = np.zeros([q.shape[0], q.shape[1]])
     for i in range(pos_data.shape[1]):
         dq[:, i] = np.gradient(q[:, i], edge_order=2) / dt
         ddq[:, i] = np.gradient(dq[:, i], edge_order=2) / dt
-        # plt.plot(t, q[:,i])
-        # plt.plot(t, dq[:,i])
-        # plt.plot(t, ddq[:,i]
-    #suppress 2 segments of  samples due to the border effect
-    nbord = 5*nbutter
-    
+
+    # suppress end segments of samples due to the border effect
+    nbord = 5 * nbutter
     q = np.delete(q, np.s_[0:nbord], axis=0)
-    q = np.delete(q, np.s_[(q.shape[0]-nbord):q.shape[0]], axis=0)
-
+    q = np.delete(q, np.s_[(q.shape[0] - nbord):q.shape[0]], axis=0)
     dq = np.delete(dq, np.s_[0:nbord], axis=0)
-    dq = np.delete(dq, np.s_[(dq.shape[0]-nbord):dq.shape[0]], axis=0)
-
+    dq = np.delete(dq, np.s_[(dq.shape[0] - nbord):dq.shape[0]], axis=0)
     ddq = np.delete(ddq, np.s_[0:nbord], axis=0)
-    ddq = np.delete(ddq, np.s_[(ddq.shape[0]-nbord):ddq.shape[0]], axis=0)
-    print(q.shape, dq.shape,ddq.shape)
+    ddq = np.delete(ddq, np.s_[(ddq.shape[0] - nbord):ddq.shape[0]], axis=0)
+    # print(q.shape, dq.shape,ddq.shape)
+
     # build identification model
     qd = dq
     qdd = ddq
-
-    # plt.figure(2)
-    # t = np.linspace(0,1,curr_data.shape[0])
-    # plt.plot(t, dq[:,4] + dq[:,5])
-    # for i in range(4,6):
-    #     plt.plot(t, dq[:,i])
-
-    # plt.show()
     N = q.shape[0]
     W = build_regressor_full_modified(
         model, data, N, nq, nv, njoints, q, qd, qdd)
-    # print(W.shape)
     W = add_coupling(W, model, data, N, nq, nv, njoints, q, qd, qdd)
 
-
-    # calculate joint torques from measured current
-    # reduction gear ratio matrix*motor_torques
+    # calculate joint torques = reduction gear ratio matrix*motor_torques
     red_tau = np.diag([N1, N2, N3, N4, N5, N6])
     red_tau[4, 5] = N6
-    print(red_tau)
-    # print(y.shape)
     tau_T = np.dot(red_tau, y.T)
-    #suppress 2 segments of  samples due to the border effect
+
+    # suppress end segments of  samples due to the border effect
     tau_T = np.delete(tau_T, np.s_[0:nbord], axis=1)
-    tau_T = np.delete(tau_T, np.s_[(tau_T.shape[1]-nbord):tau_T.shape[1]], axis=1)
+    tau_T = np.delete(tau_T, np.s_[(tau_T.shape[1] - nbord):tau_T.shape[1]], axis=1)
 
-    # plt.figure(2)
-    # t = np.linspace(0,1,curr_data.shape[0])
-    # for i in range(4,6):
-    #     plt.plot(t, tau_T[i,:])
-    # plt.show()
-
-    #eliminate qd crossing zero
-    #find indices of qd around zero
+    # eliminate qd crossing zero
+    # find indices of qd around zero
     # qd_lim = 0.01*np.array([287,287,430,410,320,700])*np.pi/180
     # idx_qd_cross_zero = []
     # for i in range(dq.shape[0]):
@@ -773,10 +706,10 @@ if __name__ == '__main__':
     # print(tau_T.shape)
 
     # straight a matrix n-by-6 to a vector 6n-by-1
-    tau_data = np.asarray(tau_T).ravel()  
+    tau_data = np.asarray(tau_T).ravel()
     tau = tau_data
-    
-    #lowpass filtering and downsampling columns of W and tau manually
+
+    # lowpass filtering and downsampling columns of W and tau manually
     # choose 1 out of 2 filters below
     # low pass butter filtering on tau and columns of W
     # b,a = signal.butter(4,100/2500, 'low')
@@ -788,7 +721,6 @@ if __name__ == '__main__':
     # for j in range(W.shape[1]):
     #   W[:,j] = signal.filtfilt(b,a,W[:,j])
     # tau = signal.filtfilt(b,a,tau)
-    ##################################
 
     # downsampling on lowpass filtered data
     # N_ = W.shape[0]//45
@@ -798,109 +730,100 @@ if __name__ == '__main__':
     #       # print(i)
     #   W_[i,:] = W[i*45,:]
     #   tau_[i] = tau[i*45]
+    ##################################
 
     # decimate by scipy.signal.decimate################# best factor = 25
-
-    #slice and decimate joint-by-joint to apply WLS on correct dimension 
-    nj_ = tau.shape[0]//6
+    # slice and decimate joint-by-joint to apply WLS on correct dimension
+    nj_ = tau.shape[0] // 6
     tau_list = []
     W_list = []
     for i in range(nv):
-        tau_temp = tau[(i*nj_):((i+1)*nj_)]
+        tau_temp = tau[(i * nj_):((i + 1) * nj_)]
         for m in range(2):
             print(tau_temp.shape)
             tau_temp = signal.decimate(tau_temp, q=10, zero_phase=True)
         tau_list.append(tau_temp)
 
-        W_joint_temp = np.zeros((tau_temp.shape[0],W.shape[1]))
+        W_joint_temp = np.zeros((tau_temp.shape[0], W.shape[1]))
         for j in range(W_joint_temp.shape[1]):
-            W_joint_temp_col = W[(i*nj_):(i*nj_+nj_),j]
+            W_joint_temp_col = W[(i * nj_):(i * nj_ + nj_), j]
             for n in range(2):
                 W_joint_temp_col = signal.decimate(W_joint_temp_col, q=10, zero_phase=True)
             W_joint_temp[:, j] = W_joint_temp_col
         W_list.append(W_joint_temp)
-    #eliminate qd crossing zero
-    #find indices of qd around zero
-    qd_lim = 0.01*np.array([287,287,430,410,320,700])*np.pi/180
-    
+
+    # eliminate qd crossing zero
+
+    qd_lim = 0.01 * np.array([287, 287, 430, 410, 320, 700]) * np.pi / 180
+
     for i in range(len(W_list)):
         idx_qd_cross_zero = []
         for j in range(W_list[i].shape[0]):
-            if abs(W_list[i][j,i*14 + 11]) < qd_lim[i]:
+            if abs(W_list[i][j, i * 14 + 11]) < qd_lim[i]:  # check columns of fv_i
                 idx_qd_cross_zero.append(j)
-        if i == 4 or i ==5: #joint 5 and 6
+        if i == 4 or i == 5:  # joint 5 and 6
             for k in range(W_list[i].shape[0]):
-                if abs(W_list[i][k,4*14 + 11] + W_list[i][k,5*14 + 11]) < qd_lim[4]+qd_lim[5]:
+                if abs(W_list[i][k, 4 * 14 + 11] + W_list[i][k, 5 * 14 + 11]) < qd_lim[4] + qd_lim[5]:  # check sum cols of fv_5 + fv_6
                     idx_qd_cross_zero.append(k)
+        # indices with vels around zero
         idx_eliminate = list(set(idx_qd_cross_zero))
-        W_list[i] = np.delete(W_list[i],idx_eliminate, axis=0)
-        tau_list[i] = np.delete(tau_list[i],idx_eliminate, axis=0)
-        print(W_list[i].shape,tau_list[i].shape)
-    #rejoining 
+        W_list[i] = np.delete(W_list[i], idx_eliminate, axis=0)
+        tau_list[i] = np.delete(tau_list[i], idx_eliminate, axis=0)
+        print(W_list[i].shape, tau_list[i].shape)
+
+    # rejoining
+    # note length of data on each joint different
     row_size = 0
     for i in range(len(tau_list)):
         row_size += tau_list[i].shape[0]
     tau_ = np.zeros(row_size)
     print(tau_.shape)
-    W_ = np.zeros((row_size,W_list[0].shape[1]))
+    W_ = np.zeros((row_size, W_list[0].shape[1]))
     print(W_.shape)
     a = 0
     for i in range(len(tau_list)):
-        tau_[a:(a+tau_list[i].shape[0])] = tau_list[i]
-        W_[a:(a+tau_list[i].shape[0]),:] = W_list[i]
+        tau_[a:(a + tau_list[i].shape[0])] = tau_list[i]
+        W_[a:(a + tau_list[i].shape[0]), :] = W_list[i]
         a += tau_list[i].shape[0]
     print(tau_.shape, W_.shape)
 
-    #decimate as a whole on all 6 joints
+    # decimate as a whole on all 6 joints
     # tau_med = signal.medfilt(tau,1)
     # tau_ = signal.decimate(tau_med, 24, zero_phase=True)
-
     # W_ = np.zeros((tau_.shape[0], W.shape[1]))
     # W_med = np.zeros((W.shape[0],W.shape[1]))
     # for i in range(W.shape[1]):
     #     W_med[:,i] = signal.medfilt(W[:,i],1)
     #     W_[:, i] = signal.decimate(W_med[:, i], 24, zero_phase=True)
-
     ######################################
-    # t = np.linspace(0,1,tau_data.shape[0])
-    # print(tau_data.shape)
-    # plt.figure()
-    # plt.plot(t,tau_data)
-    # t_ = np.linspace(0,1,tau_.shape[0])
-    # print(tau_.shape)
-    # plt.plot(t_,tau_)
-    # plt.show()
-    # print(W_.shape)
 
     # elimate and QR decomposition for ordinary LS
     W_e, params_e, params_r = eliminateNonAffecting(W_, 0.001)
-    # W_b, base_parameters  = QR_pivoting(tau_, W_e, params_r)
     W_b, base_parameters, params_base, phi_b = double_QR(tau_, W_e, params_r)
     std_xr_ols = relative_stdev(W_b, phi_b, tau_)
-    
-    
-   
-    #eliminate and QR on each link
-    a = 0 
+
+    # weighted LS
+    a = 0
     sig_ro_joint = np.zeros(nv)
     diag_SIGMA = np.zeros(row_size)
+    # variance to each joint estimates
     for i in range(len(tau_list)):
-        sig_ro_joint[i] = np.linalg.norm(tau_list[i] - np.dot(W_b[a:(a+tau_list[i].shape[0]),:],phi_b))**2 / (tau_list[i].shape[0])
-        diag_SIGMA[a:(a+tau_list[i].shape[0])]  = np.full(tau_list[i].shape[0],sig_ro_joint[i])
+        sig_ro_joint[i] = np.linalg.norm(tau_list[i] - np.dot(W_b[a:(a + tau_list[i].shape[0]), :], phi_b))**2 / (tau_list[i].shape[0])
+        diag_SIGMA[a:(a + tau_list[i].shape[0])] = np.full(tau_list[i].shape[0], sig_ro_joint[i])
         a += tau_list[i].shape[0]
     SIGMA = np.diag(diag_SIGMA)
-
-    C_X = np.linalg.inv(np.matmul(np.matmul(W_b.T,np.linalg.inv(SIGMA)),W_b))#(W^T*SIGMA^-1*W)^-1
-    phi_b = np.matmul(np.matmul(np.matmul(C_X,W_b.T),np.linalg.inv(SIGMA)),tau_)#(W^T*SIGMA^-1*W)^-1*W^T*SIGMA^-1*TAU
-    phi_b = np.around(phi_b,6)
-    
+    # Covariance matrix
+    C_X = np.linalg.inv(np.matmul(np.matmul(W_b.T, np.linalg.inv(SIGMA)), W_b))  # (W^T*SIGMA^-1*W)^-1
+    # WLS solution
+    phi_b = np.matmul(np.matmul(np.matmul(C_X, W_b.T), np.linalg.inv(SIGMA)), tau_)  # (W^T*SIGMA^-1*W)^-1*W^T*SIGMA^-1*TAU
+    phi_b = np.around(phi_b, 6)
+    # WLS standard deviation
     STD_X = np.diag(C_X)
     std_xr = np.zeros(STD_X.shape[0])
     for i in range(STD_X.shape[0]):
         std_xr[i] = np.round(100 * np.sqrt(STD_X[i]) / np.abs(phi_b[i]), 2)
 
-
-    #weighted LS 
+    # weighted LS
     # sig_ro_joint = np.zeros(nv)
     # nj = tau_.shape[0]//nv
     # #eliminate and QR on each link
@@ -921,13 +844,12 @@ if __name__ == '__main__':
     # C_X = np.linalg.inv(np.matmul(np.matmul(W_b.T,np.linalg.inv(SIGMA)),W_b))
     # phi_b = np.matmul(np.matmul(np.matmul(C_X,W_b.T),np.linalg.inv(SIGMA)),tau_)
     # phi_b = np.around(phi_b,6)
-    
+
     # STD_X = np.diag(C_X)
     # std_xr = np.zeros(STD_X.shape[0])
     # for i in range(STD_X.shape[0]):
     #     std_xr[i] = np.round(100 * np.sqrt(STD_X[i]) / np.abs(phi_b[i]), 2)
-    
-    
+
     # identification on random data points
     # print("identification on random data")
     # N_ = 1000
@@ -937,22 +859,16 @@ if __name__ == '__main__':
     # W_rand    = build_regressor_full_modified(model, data, N_,  nq, nv,njoints, q_rand, qd_rand, qdd_rand)
     # print(W_rand.shape)
     # W_rand    = add_coupling(W_rand,model, data, N_,  nq, nv,njoints, q_rand, qd_rand, qdd_rand)
-
     # W_e, params_e, params_r = eliminateNonAffecting(W_rand, 1e-6)
     # # W_b, base_parameters  = QR_pivoting(tau_rand, W_e, params_r)
     # W_b, base_parameters  = double_QR(tau_rand, W_e, params_r)
 
     print("eleminanted parameters: ", params_e)
     print('condition number of base regressor: ', np.linalg.cond(W_b))
-    phi_b_ols = np.around(np.linalg.lstsq(W_b, tau_, rcond = None)[0], 6)
-    # std_xr_ls = np.around(np.divide(100*np.linalg.lstsq(W_b, tau_, rcond = None)[1],phi_b_ls),2)
-    table_base = pd.DataFrame(base_parameters.items(), columns=[
-                              "Base Parameters", "Value"])
+    phi_b_ols = np.around(np.linalg.lstsq(W_b, tau_, rcond=None)[0], 6)
     path_save = join(dirname(dirname(str(abspath(__file__)))),
                      "identification/src/thanh/TX40_bp_mdh_OLS_WLS_2.csv")
     with open(path_save, "w") as output_file:
         w = csv.writer(output_file)
         for i in range(len(params_base)):
-            w.writerow([params_base[i], phi_b_ols[i],std_xr_ols[i], phi_b[i], std_xr[i]])
-        # for key, val in base_parameters.items():
-        #   w.writerow([key, val])
+            w.writerow([params_base[i], phi_b_ols[i], std_xr_ols[i], phi_b[i], std_xr[i]])
