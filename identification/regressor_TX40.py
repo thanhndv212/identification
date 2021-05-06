@@ -801,7 +801,8 @@ if __name__ == '__main__':
     W_e, params_e, params_r = eliminateNonAffecting(W_, 0.001)
     W_b, base_parameters, params_base, phi_b = double_QR(tau_, W_e, params_r)
     std_xr_ols = relative_stdev(W_b, phi_b, tau_)
-
+    phi_b_ols = np.around(np.linalg.lstsq(W_b, tau_, rcond=None)[0], 6)
+    
     # weighted LS
     a = 0
     sig_ro_joint = np.zeros(nv)
@@ -864,11 +865,60 @@ if __name__ == '__main__':
     # W_b, base_parameters  = double_QR(tau_rand, W_e, params_r)
 
     print("eleminanted parameters: ", params_e)
-    print('condition number of base regressor: ', np.linalg.cond(W_b))
-    phi_b_ols = np.around(np.linalg.lstsq(W_b, tau_, rcond=None)[0], 6)
+    # print('condition number of base regressor: ', np.linalg.cond(W_b))
+    
+    # path_save = join(dirname(dirname(str(abspath(__file__)))),
+    #                  "identification/src/thanh/TX40_bp_mdh_OLS_WLS_2.csv")
+    # with open(path_save, "w") as output_file:
+    #     w = csv.writer(output_file)
+    #     for i in range(len(params_base)):
+    #         w.writerow([params_base[i], phi_b_ols[i], std_xr_ols[i], phi_b[i], std_xr[i]])
+
+    ############################################################################################################################
+    #essential parameter
+    min_std_xr = min(std_xr)
+    idx_essential = []
+    ratio_essential = 30
+    params_essential = []
+    for i in range(std_xr.shape[0]):
+        if std_xr[i] < ratio_essential*min_std_xr:
+            idx_essential.append(i)
+            params_essential.append(params_base[i])
+
+    #rebuild regressor for essential params
+    W_essential = np.zeros((W_b.shape[0],len(idx_essential))) 
+    for i in range(len(idx_essential)):
+        W_essential[:,i] = W_b[:,idx_essential[i]]
+
+    #OLS 
+    phi_e_ols = np.around(np.linalg.lstsq(W_essential, tau_, rcond=None)[0], 6)
+    std_e_ols = relative_stdev(W_essential, phi_e_ols, tau_)
+    print('condition number of essential regressor: ', np.linalg.cond(W_essential))
+
+    # weighted LS
+    a = 0
+    sig_ro_joint_e = np.zeros(nv)
+    diag_SIGMA_e = np.zeros(row_size)
+    # variance to each joint estimates
+    for i in range(len(tau_list)):
+        sig_ro_joint_e[i] = np.linalg.norm(tau_list[i] - np.dot(W_essential[a:(a + tau_list[i].shape[0]), :], phi_e_ols))**2 / (tau_list[i].shape[0])
+        diag_SIGMA_e[a:(a + tau_list[i].shape[0])] = np.full(tau_list[i].shape[0], sig_ro_joint[i])
+        a += tau_list[i].shape[0]
+    SIGMA_e = np.diag(diag_SIGMA_e)
+    # Covariance matrix
+    C_X_e = np.linalg.inv(np.matmul(np.matmul(W_essential.T, np.linalg.inv(SIGMA_e)), W_essential))  # (W^T*SIGMA^-1*W)^-1
+    # WLS solution
+    phi_e_wls = np.matmul(np.matmul(np.matmul(C_X_e, W_essential.T), np.linalg.inv(SIGMA_e)), tau_)  # (W^T*SIGMA^-1*W)^-1*W^T*SIGMA^-1*TAU
+    phi_e_wls = np.around(phi_e_wls, 6)
+    # WLS standard deviation
+    STD_X_e = np.diag(C_X_e)
+    std_xr_e = np.zeros(STD_X_e.shape[0])
+    for i in range(STD_X_e.shape[0]):
+        std_xr_e[i] = np.round(100 * np.sqrt(STD_X_e[i]) / np.abs(phi_e_wls[i]), 2)
+
     path_save = join(dirname(dirname(str(abspath(__file__)))),
-                     "identification/src/thanh/TX40_bp_mdh_OLS_WLS_2.csv")
+                     "identification/src/thanh/TX40_ep_2.csv")
     with open(path_save, "w") as output_file:
         w = csv.writer(output_file)
-        for i in range(len(params_base)):
-            w.writerow([params_base[i], phi_b_ols[i], std_xr_ols[i], phi_b[i], std_xr[i]])
+        for i in range(len(params_essential)):
+            w.writerow([params_essential[i], phi_e_ols[i],std_e_ols[i],phi_e_wls[i],std_xr_e[i]])
