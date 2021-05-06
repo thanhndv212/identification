@@ -14,27 +14,8 @@ from os.path import dirname, join, abspath
 import pandas as pd
 import json
 import csv
+from settings import *
 
-
-def loadModels(robotname, robot_urdf_file):
-    """This function create a robot model and its data by inputting a URDF file that describes the robot.
-            Input:  robotname: directory containing model of robot
-                    robot_urdf_file: URDF file of robot
-            Output: robot: robot model and data created by Pinocchio"""
-
-    pinocchio_model_dir = join(
-        dirname(dirname(str(abspath(__file__)))), "models")
-    model_path = join(pinocchio_model_dir, "others/robots")
-    mesh_dir = model_path
-    urdf_filename = robot_urdf_file
-    urdf_dir = robotname + "/urdf"
-    urdf_model_path = join(join(model_path, urdf_dir), urdf_filename)
-    if not isFext:
-        robot = RobotWrapper.BuildFromURDF(urdf_model_path, mesh_dir)
-    else:
-        robot = RobotWrapper.BuildFromURDF(
-            urdf_model_path, mesh_dir, pin.JointModelFreeFlyer())
-    return robot
 
 
 def standardParameters(njoints, fv, fs, Ia, off, Iam6, fvm6, fsm6):
@@ -551,67 +532,39 @@ def visualization(robot):
         robot.display(robot.q0)
 
 
-def main():
-    params_std = standardParameters(njoints, fv, fs, Ia, off, Iam6, fvm6, fsm6)
-    table_stdparams = pd.DataFrame(params_std.items(), columns=[
-                                   "Standard Parameters", "Value"])
-    print(table_stdparams.to_latex())  # latex table
-    print("###########################")
-    if not isFext:
-        q, qd, qdd = generateWaypoints(N, nq, nv, -1, 1)
-        tau, W = iden_model(model, data, N, nq, nv, njoints, q, qd, qdd)
-    else:
-        q, qd, qdd = generateWaypoints_fext(N, robot, -1, 1)
-        tau, W = iden_model_fext(model, data, N, nq, nv, njoints, q, qd, qdd)
-    W_e, params_r = eliminateNonAffecting(W, 1e-6)
-    W_b, base_parameters = QR_pivoting(W_e, params_r)
-    table_base = pd.DataFrame(base_parameters.items(), columns=[
-                              "Base Parameters", "Value"])
-    print(table_base.to_latex())  # latex
-    print("###########################")
-    print('condition number of base regressor: ', np.linalg.cond(W_b))
-    U, S, VT = np.linalg.svd(W_b)
-    print('singular values of base regressor:', S)
-    visualization(robot)
+def identify_rand():
+    # identification on random data points
+    print("identification on random data")
+    N_ = 1000
+    q_rand , qd_rand, qdd_rand = generateWaypoints(N_, nq, nv, -1, 1)
+    tau_rand= get_torque_rand(model, data, N_,  nq, nv, njoints, q_rand, qd_rand, qdd_rand, Ia, off, Iam6, fvm6, fsm6)
+    # W_rand  = build_regressor_full(model, data, N_,  nq, nv,njoints, q_rand, qd_rand, qdd_rand)
+    W_rand    = build_regressor_full_modified(model, data, N_,  nq, nv,njoints, q_rand, qd_rand, qdd_rand)
+    print(W_rand.shape)
+    W_rand    = add_coupling(W_rand,model, data, N_,  nq, nv,njoints, q_rand, qd_rand, qdd_rand)
+    W_e, params_e, params_r = eliminateNonAffecting(W_rand, 1e-6)
+    # W_b, base_parameters  = QR_pivoting(tau_rand, W_e, params_r)
+    W_b, base_parameters  = double_QR(tau_rand, W_e, params_r)
 
 
-isFext = False
-isActuator_int = True
-isFrictionincld = True
-isOffset = True
-isCoupling = True
-if len(argv) > 1:
-    if argv[1] == '-f':
-        isFrictionincld = True
-
-fv = np.array([8.05e0, 5.53e0, 1.97e0, 1.11e0, 1.86e0, 6.5e-1])
-fs = np.array([7.14e0, 8.26e0, 6.34e0, 2.48e0, 3.03e0, 2.82e-1])
-Ia = np.array([3.62e-1, 3.62e-1, 9.88e-2, 3.13e-2, 4.68e-2, 1.05e-2])
-off = np.array([3.92e-1, 1.37e0, 3.26e-1, -1.02e-1, -2.88e-2, 1.27e-1])
-Iam6 = 9.64e-3
-fvm6 = 6.16e-1
-fsm6 = 1.95e0
-
-# load robot
-robot = loadModels("staubli_tx40_description", "tx40_mdh_modified.urdf")
-# robot = loadModels("2DOF_description", "2DOF_description.urdf")
-# robot = loadModels("SC_3DOF", "3DOF.urdf")
-model = robot.model
-print(model)
-data = robot.data
-nq, nv, njoints = model.nq, model.nv, model.njoints
+ 
 
 
 if __name__ == '__main__':
+    model = robot.model
+    print(model)
+    data = robot.data
+    nq, nv, njoints = model.nq, model.nv, model.njoints
     # params_std = standardParameters(njoints,fv,fs,Ia,off,Iam6,fvm6,fsm6)
     params_std = standardParameters_modified(
         njoints, fv, fs, Ia, off, Iam6, fvm6, fsm6)
-    table_stdparams = pd.DataFrame(params_std.items(), columns=[
-                                   "Standard Parameters", "Value"])
-    print(table_stdparams)
+    # table_stdparams = pd.DataFrame(params_std.items(), columns=[
+    #                                "Standard Parameters", "Value"])
+    # print(table_stdparams)
 
     # print("identification on exp data")
-    dt = 1 / 5000
+    
+    f_sample = 5000  
     curr_data = pd.read_csv('src/thanh/curr_data.csv').to_numpy()
     pos_data = pd.read_csv('src/thanh/pos_read_data.csv').to_numpy()
     # Nyquist freq/0.5*sampling rate fs = 0.5 *5 kHz
@@ -622,13 +575,6 @@ if __name__ == '__main__':
 
     y = curr_data
     q = pos_data
-
-    N1 = 32
-    N2 = 32
-    N3 = 45
-    N4 = -48
-    N5 = 45
-    N6 = 32
 
     # calculate joint position = inv(reduction ration matrix)*motor_encoder_angle
     red_q = np.diag([N1, N2, N3, N4, N5, N6])
@@ -644,12 +590,13 @@ if __name__ == '__main__':
     # median order 3 => butterworth zerophase filtering
     nbutter = 4
     f_butter = 100
-    b, a = signal.butter(nbutter, f_butter / 2500, 'low')
+    b, a = signal.butter(nbutter, f_butter / (f_sample/2), 'low')
     for j in range(q.shape[1]):
         q[:, j] = signal.medfilt(q[:, j], 3)
         q[:, j] = signal.filtfilt(b, a, q[:, j])
 
     # calculate vel and acc by central difference
+    dt = 1 / f_sample
     dq = np.zeros([q.shape[0], q.shape[1]])
     ddq = np.zeros([q.shape[0], q.shape[1]])
     for i in range(pos_data.shape[1]):
@@ -664,9 +611,8 @@ if __name__ == '__main__':
     dq = np.delete(dq, np.s_[(dq.shape[0] - nbord):dq.shape[0]], axis=0)
     ddq = np.delete(ddq, np.s_[0:nbord], axis=0)
     ddq = np.delete(ddq, np.s_[(ddq.shape[0] - nbord):ddq.shape[0]], axis=0)
-    # print(q.shape, dq.shape,ddq.shape)
 
-    # build identification model
+    # build regressor matrix
     qd = dq
     qdd = ddq
     N = q.shape[0]
@@ -683,57 +629,11 @@ if __name__ == '__main__':
     tau_T = np.delete(tau_T, np.s_[0:nbord], axis=1)
     tau_T = np.delete(tau_T, np.s_[(tau_T.shape[1] - nbord):tau_T.shape[1]], axis=1)
 
-    # eliminate qd crossing zero
-    # find indices of qd around zero
-    # qd_lim = 0.01*np.array([287,287,430,410,320,700])*np.pi/180
-    # idx_qd_cross_zero = []
-    # for i in range(dq.shape[0]):
-    #     for j in range(dq.shape[1]):
-    #         if abs(dq[i,j]) < qd_lim[j]:
-    #             idx_qd_cross_zero.append(i)
-    #         if abs(dq[i,4] + dq[i,5]) < qd_lim[4] + qd_lim[5]:
-    #             idx_qd_cross_zero.append(i)
-    # idx_qd_cross_zero = list(set(idx_qd_cross_zero))
-    # #eliminate on W by row
-    # idx_eliminate = np.array(idx_qd_cross_zero)
-    # for i in range(1,nv):
-    #     temp = (i*N + np.array(idx_qd_cross_zero))
-    #     idx_eliminate = np.append(idx_eliminate, temp)
-    # W = np.delete(W, idx_eliminate,0)
-    # print(W.shape)
-    # #eliminate on tau on columns before straightening out
-    # tau_T = np.delete(tau_T,idx_qd_cross_zero,1)
-    # print(tau_T.shape)
-
     # straight a matrix n-by-6 to a vector 6n-by-1
-    tau_data = np.asarray(tau_T).ravel()
-    tau = tau_data
+    tau = np.asarray(tau_T).ravel()
 
-    # lowpass filtering and downsampling columns of W and tau manually
-    # choose 1 out of 2 filters below
-    # low pass butter filtering on tau and columns of W
-    # b,a = signal.butter(4,100/2500, 'low')
-
-    # chebyshev I lowpass
-    # b,a = signal.cheby1(10,1,40,'low',fs=5000, output='ba')
-
-    # forward-backward filter to prevent phase shift
-    # for j in range(W.shape[1]):
-    #   W[:,j] = signal.filtfilt(b,a,W[:,j])
-    # tau = signal.filtfilt(b,a,tau)
-
-    # downsampling on lowpass filtered data
-    # N_ = W.shape[0]//45
-    # W_ = np.zeros([N_,W.shape[1]])
-    # tau_ = np.zeros(N_)
-    # for i in range(N_):
-    #       # print(i)
-    #   W_[i,:] = W[i*45,:]
-    #   tau_[i] = tau[i*45]
-    ##################################
-
-    # decimate by scipy.signal.decimate################# best factor = 25
-    # slice and decimate joint-by-joint to apply WLS on correct dimension
+    # decimate by scipy.signal.decimate best_factor q = 25
+    # parallel decimate joint-by-joint on joint torques and columns of regressor
     nj_ = tau.shape[0] // 6
     tau_list = []
     W_list = []
@@ -743,7 +643,6 @@ if __name__ == '__main__':
             print(tau_temp.shape)
             tau_temp = signal.decimate(tau_temp, q=10, zero_phase=True)
         tau_list.append(tau_temp)
-
         W_joint_temp = np.zeros((tau_temp.shape[0], W.shape[1]))
         for j in range(W_joint_temp.shape[1]):
             W_joint_temp_col = W[(i * nj_):(i * nj_ + nj_), j]
@@ -753,9 +652,6 @@ if __name__ == '__main__':
         W_list.append(W_joint_temp)
 
     # eliminate qd crossing zero
-
-    qd_lim = 0.01 * np.array([287, 287, 430, 410, 320, 700]) * np.pi / 180
-
     for i in range(len(W_list)):
         idx_qd_cross_zero = []
         for j in range(W_list[i].shape[0]):
@@ -777,9 +673,7 @@ if __name__ == '__main__':
     for i in range(len(tau_list)):
         row_size += tau_list[i].shape[0]
     tau_ = np.zeros(row_size)
-    print(tau_.shape)
     W_ = np.zeros((row_size, W_list[0].shape[1]))
-    print(W_.shape)
     a = 0
     for i in range(len(tau_list)):
         tau_[a:(a + tau_list[i].shape[0])] = tau_list[i]
@@ -787,16 +681,7 @@ if __name__ == '__main__':
         a += tau_list[i].shape[0]
     print(tau_.shape, W_.shape)
 
-    # decimate as a whole on all 6 joints
-    # tau_med = signal.medfilt(tau,1)
-    # tau_ = signal.decimate(tau_med, 24, zero_phase=True)
-    # W_ = np.zeros((tau_.shape[0], W.shape[1]))
-    # W_med = np.zeros((W.shape[0],W.shape[1]))
-    # for i in range(W.shape[1]):
-    #     W_med[:,i] = signal.medfilt(W[:,i],1)
-    #     W_[:, i] = signal.decimate(W_med[:, i], 24, zero_phase=True)
-    ######################################
-
+    #base parameters
     # elimate and QR decomposition for ordinary LS
     W_e, params_e, params_r = eliminateNonAffecting(W_, 0.001)
     W_b, base_parameters, params_base, phi_b = double_QR(tau_, W_e, params_r)
@@ -824,46 +709,6 @@ if __name__ == '__main__':
     for i in range(STD_X.shape[0]):
         std_xr[i] = np.round(100 * np.sqrt(STD_X[i]) / np.abs(phi_b[i]), 2)
 
-    # weighted LS
-    # sig_ro_joint = np.zeros(nv)
-    # nj = tau_.shape[0]//nv
-    # #eliminate and QR on each link
-    # for i in range(nv):
-    #     W_e_temp, _, params_r_temp = eliminateNonAffecting(W_list[i],0.001)
-    #     W_b_temp, _, _, phi_b_temp = double_QR(tau_list[i],W_e_temp, params_r_temp)
-    #     # sig_ro_joint[i] = np.linalg.norm(
-    #     # (tau_list[i] - np.dot(W_b_temp, phi_b_temp),)**2 / (W_b_temp.shape[0]- phi_b_temp.shape[0]))
-    #     sig_ro_joint[i] = np.linalg.lstsq(W_b_temp,tau_list[i])[1]/ (W_b_temp.shape[0]- phi_b_temp.shape[0])
-    # # for i in range(nv):
-    # #     sig_ro_joint[i] = np.linalg.norm(
-    # #     (tau[(i*nj):((i+1)*nj)] - np.dot(W_b[(i*nj):((i+1)*nj),:], phi_b)))**2 / (W_b.shape[0]//nv - phi_b.shape[0])
-    # diag_SIGMA = np.full(nj,sig_ro_joint[0])
-    # for j in range(1,nv):
-    #     diag_SIGMA = np.append(diag_SIGMA, np.full(nj, sig_ro_joint[i]))
-    # SIGMA = np.diag(diag_SIGMA)
-
-    # C_X = np.linalg.inv(np.matmul(np.matmul(W_b.T,np.linalg.inv(SIGMA)),W_b))
-    # phi_b = np.matmul(np.matmul(np.matmul(C_X,W_b.T),np.linalg.inv(SIGMA)),tau_)
-    # phi_b = np.around(phi_b,6)
-
-    # STD_X = np.diag(C_X)
-    # std_xr = np.zeros(STD_X.shape[0])
-    # for i in range(STD_X.shape[0]):
-    #     std_xr[i] = np.round(100 * np.sqrt(STD_X[i]) / np.abs(phi_b[i]), 2)
-
-    # identification on random data points
-    # print("identification on random data")
-    # N_ = 1000
-    # q_rand , qd_rand, qdd_rand = generateWaypoints(N_, nq, nv, -1, 1)
-    # tau_rand= get_torque_rand(model, data, N_,  nq, nv, njoints, q_rand, qd_rand, qdd_rand, Ia, off, Iam6, fvm6, fsm6)
-    # # W_rand  = build_regressor_full(model, data, N_,  nq, nv,njoints, q_rand, qd_rand, qdd_rand)
-    # W_rand    = build_regressor_full_modified(model, data, N_,  nq, nv,njoints, q_rand, qd_rand, qdd_rand)
-    # print(W_rand.shape)
-    # W_rand    = add_coupling(W_rand,model, data, N_,  nq, nv,njoints, q_rand, qd_rand, qdd_rand)
-    # W_e, params_e, params_r = eliminateNonAffecting(W_rand, 1e-6)
-    # # W_b, base_parameters  = QR_pivoting(tau_rand, W_e, params_r)
-    # W_b, base_parameters  = double_QR(tau_rand, W_e, params_r)
-
     print("eleminanted parameters: ", params_e)
     # print('condition number of base regressor: ', np.linalg.cond(W_b))
     
@@ -876,46 +721,44 @@ if __name__ == '__main__':
 
     ############################################################################################################################
     #essential parameter
-    min_std_xr = min(std_xr)
-    idx_essential = []
-    ratio_essential = 30
-    params_essential = []
-    for i in range(std_xr.shape[0]):
-        if std_xr[i] < ratio_essential*min_std_xr:
-            idx_essential.append(i)
-            params_essential.append(params_base[i])
+    min_std_e = min(std_xr)
+    max_std_e = max(std_xr)
+    std_xr_e = std_xr
+    params_essential = params_base
+    W_essential = W_b
+    while not (max_std_e < ratio_essential*min_std_e):
+        i, = np.where(np.isclose(std_xr_e, max_std_e))
+        del params_essential[int(i)]
+        W_essential = np.delete(W_essential, i, 1 )
 
-    #rebuild regressor for essential params
-    W_essential = np.zeros((W_b.shape[0],len(idx_essential))) 
-    for i in range(len(idx_essential)):
-        W_essential[:,i] = W_b[:,idx_essential[i]]
+        #OLS 
+        phi_e_ols = np.around(np.linalg.lstsq(W_essential, tau_, rcond=None)[0], 6)
+        std_e_ols = relative_stdev(W_essential, phi_e_ols, tau_)
+        print('condition number of essential regressor: ', np.linalg.cond(W_essential))
 
-    #OLS 
-    phi_e_ols = np.around(np.linalg.lstsq(W_essential, tau_, rcond=None)[0], 6)
-    std_e_ols = relative_stdev(W_essential, phi_e_ols, tau_)
-    print('condition number of essential regressor: ', np.linalg.cond(W_essential))
-
-    # weighted LS
-    a = 0
-    sig_ro_joint_e = np.zeros(nv)
-    diag_SIGMA_e = np.zeros(row_size)
-    # variance to each joint estimates
-    for i in range(len(tau_list)):
-        sig_ro_joint_e[i] = np.linalg.norm(tau_list[i] - np.dot(W_essential[a:(a + tau_list[i].shape[0]), :], phi_e_ols))**2 / (tau_list[i].shape[0])
-        diag_SIGMA_e[a:(a + tau_list[i].shape[0])] = np.full(tau_list[i].shape[0], sig_ro_joint[i])
-        a += tau_list[i].shape[0]
-    SIGMA_e = np.diag(diag_SIGMA_e)
-    # Covariance matrix
-    C_X_e = np.linalg.inv(np.matmul(np.matmul(W_essential.T, np.linalg.inv(SIGMA_e)), W_essential))  # (W^T*SIGMA^-1*W)^-1
-    # WLS solution
-    phi_e_wls = np.matmul(np.matmul(np.matmul(C_X_e, W_essential.T), np.linalg.inv(SIGMA_e)), tau_)  # (W^T*SIGMA^-1*W)^-1*W^T*SIGMA^-1*TAU
-    phi_e_wls = np.around(phi_e_wls, 6)
-    # WLS standard deviation
-    STD_X_e = np.diag(C_X_e)
-    std_xr_e = np.zeros(STD_X_e.shape[0])
-    for i in range(STD_X_e.shape[0]):
-        std_xr_e[i] = np.round(100 * np.sqrt(STD_X_e[i]) / np.abs(phi_e_wls[i]), 2)
-
+        # weighted LS
+        a = 0
+        sig_ro_joint_e = np.zeros(nv)
+        diag_SIGMA_e = np.zeros(row_size)
+        # variance to each joint estimates
+        for i in range(len(tau_list)):
+            sig_ro_joint_e[i] = np.linalg.norm(tau_list[i] - np.dot(W_essential[a:(a + tau_list[i].shape[0]), :], phi_e_ols))**2 / (tau_list[i].shape[0])
+            diag_SIGMA_e[a:(a + tau_list[i].shape[0])] = np.full(tau_list[i].shape[0], sig_ro_joint[i])
+            a += tau_list[i].shape[0]
+        SIGMA_e = np.diag(diag_SIGMA_e)
+        # Covariance matrix
+        C_X_e = np.linalg.inv(np.matmul(np.matmul(W_essential.T, np.linalg.inv(SIGMA_e)), W_essential))  # (W^T*SIGMA^-1*W)^-1
+        # WLS solution
+        phi_e_wls = np.matmul(np.matmul(np.matmul(C_X_e, W_essential.T), np.linalg.inv(SIGMA_e)), tau_)  # (W^T*SIGMA^-1*W)^-1*W^T*SIGMA^-1*TAU
+        phi_e_wls = np.around(phi_e_wls, 6)
+        # WLS standard deviation
+        STD_X_e = np.diag(C_X_e)
+        std_xr_e = np.zeros(STD_X_e.shape[0])
+        for i in range(STD_X_e.shape[0]):
+            std_xr_e[i] = np.round(100 * np.sqrt(STD_X_e[i]) / np.abs(phi_e_wls[i]), 2)
+        min_std_e = min(std_xr_e)
+        max_std_e = max(std_xr_e)
+    #save results to csv
     path_save = join(dirname(dirname(str(abspath(__file__)))),
                      "identification/src/thanh/TX40_ep_2.csv")
     with open(path_save, "w") as output_file:
