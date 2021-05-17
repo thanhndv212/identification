@@ -15,10 +15,10 @@ import pandas as pd
 import json
 import csv
 from settings import *
+from tabulate import tabulate
 
 
-
-def standardParameters(njoints, fv, fs, Ia, off, Iam6, fvm6, fsm6):
+def standardParameters(model, njoints, fv=0, fs=0, Ia=0, off=0, Iam6=0, fvm6=0, fsm6=0,isFrictionincld=False, isCoupling=False, isOffset=False, isActuator_int=False,isFext=False):
     """This function prints out the standard inertial parameters obtained from 3D design.
             Note: a flag IsFrictioncld to include in standard parameters
             Input:  njoints: number of joints
@@ -55,7 +55,7 @@ def standardParameters(njoints, fv, fs, Ia, off, Iam6, fvm6, fsm6):
     return params_std
 
 
-def standardParameters_modified(njoints, fv, fs, Ia, off, Iam6, fvm6, fsm6):
+def standardParameters_modified(model,njoints, fv=0, fs=0, Ia=0, off=0, Iam6=0, fvm6=0, fsm6=0,isFrictionincld=False, isCoupling=False, isOffset=False, isActuator_int=False,isFext=False):
     """This function prints out the standard inertial parameters obtained from 3D design.
             Note: a flag IsFrictioncld to include in standard parameters
             Input:  njoints: number of joints
@@ -81,17 +81,24 @@ def standardParameters_modified(njoints, fv, fs, Ia, off, Iam6, fvm6, fsm6):
         P_mod[0] = P[4]  # Ixx
         for k in P_mod:
             phi.append(k)
-        phi.extend([Ia[i - 1]])
-        phi.extend([fv[i - 1], fs[i - 1]])
-        phi.extend([off[i - 1]])
+        
+        if isActuator_int:
+            phi.extend([Ia[i - 1]])
+            params.extend(['Ia' + str(i)])
+        if isFrictionincld:
+            phi.extend([fv[i - 1], fs[i - 1]])
+            params.extend(['fv' + str(i), 'fs' + str(i)])
+        if isOffset:
+            phi.extend([off[i - 1]])
+            params.extend(['off' + str(i)])
         for j in params_name:
             if not isFext:
                 params.append(j + str(i))
             else:
                 params.append(j + str(i - 1))
-        params.extend(['Ia' + str(i)])
-        params.extend(['fv' + str(i), 'fs' + str(i)])
-        params.extend(['off' + str(i)])
+        
+        
+        
 
     if isCoupling:
         phi.extend([Iam6, fvm6, fsm6])
@@ -338,7 +345,7 @@ def iden_model_fext(model, data, N, nq, nv, njoints, q, v, a):
     return tau, W
 
 
-def eliminateNonAffecting(W, tol_e):
+def eliminateNonAffecting(W, params_std, tol_e):
     """This function eliminates columns which has L2 norm smaller than tolerance.
             Input:  W: joint torque regressor
                             tol_e: tolerance 
@@ -491,8 +498,8 @@ def double_QR(tau, W_e, params_r):
 
     # print('base parameters and their identified values: ')
     base_parameters = dict(zip(params_base, phi_b))
-    # table = [params_base, phi_b]
-    # print(tabulate(table))
+    table = [params_base, phi_b]
+    print(tabulate(table))
     return W_b, base_parameters, params_base, phi_b
 
 
@@ -568,18 +575,21 @@ if __name__ == '__main__':
     curr_data = pd.read_csv('src/thanh/curr_data.csv').to_numpy()
     pos_data = pd.read_csv('src/thanh/pos_read_data.csv').to_numpy()
     # Nyquist freq/0.5*sampling rate fs = 0.5 *5 kHz
-
+    
     N = pos_data.shape[0]
-    y = np.zeros([N, curr_data.shape[1]])
-    q = np.zeros([N, pos_data.shape[1]])
 
+    #cut off tail and head
+    head = int(0.1*f_sample)
+    tail = int(7.5*f_sample +1)
+    # y = curr_data[head:tail,:]
+    # q_motor = pos_data[head:tail,:]
     y = curr_data
-    q = pos_data
+    q_motor = pos_data
 
     # calculate joint position = inv(reduction ration matrix)*motor_encoder_angle
     red_q = np.diag([N1, N2, N3, N4, N5, N6])
     red_q[5, 4] = N6
-    q_T = np.dot(np.linalg.inv(red_q), q.T)
+    q_T = np.dot(np.linalg.inv(red_q), q_motor.T)
     q = q_T.T
 
     # median order 3 => butterworth zerophase filtering
@@ -588,8 +598,9 @@ if __name__ == '__main__':
     b, a = signal.butter(nbutter, f_butter / (f_sample/2), 'low')
     for j in range(q.shape[1]):
         q[:, j] = signal.medfilt(q[:, j], 3)
-        q[:, j] = signal.filtfilt(b, a, q[:, j])
+        q[:, j] = signal.filtfilt(b, a, q[:, j],axis =0, padtype='odd', padlen=3*(max(len(b),len(a))-1))
 
+    
     # calibration between joint mdh position and robot measure
     q[:, 1] += -np.pi / 2
     q[:, 2] += np.pi / 2
@@ -599,10 +610,16 @@ if __name__ == '__main__':
     dt = 1 / f_sample
     dq = np.zeros([q.shape[0], q.shape[1]])
     ddq = np.zeros([q.shape[0], q.shape[1]])
+    t = np.linspace(0,dq.shape[0],num = dq.shape[0])/f_sample
     for i in range(pos_data.shape[1]):
-        dq[:, i] = np.gradient(q[:, i], edge_order=2) / dt
-        ddq[:, i] = np.gradient(dq[:, i], edge_order=2) / dt
-
+        dq[:, i] = np.gradient(q[:, i], edge_order=1) / dt
+        ddq[:, i] = np.gradient(dq[:, i], edge_order=1) / dt
+        plt.plot(t, dq[:,i])
+    
+    plt.axvline(0.1)
+    plt.axvline(7.5)
+    plt.show(block=True)
+    
     # suppress end segments of samples due to the border effect
     nbord = 5 * nbutter
     q = np.delete(q, np.s_[0:nbord], axis=0)
@@ -659,10 +676,10 @@ if __name__ == '__main__':
         for j in range(W_list[i].shape[0]):
             if abs(W_list[i][j, i * 14 + 11]) < qd_lim[i]:  # check columns of fv_i
                 idx_qd_cross_zero.append(j)
-        if i == 4 or i == 5:  # joint 5 and 6
-            for k in range(W_list[i].shape[0]):
-                if abs(W_list[i][k, 4 * 14 + 11] + W_list[i][k, 5 * 14 + 11]) < qd_lim[4] + qd_lim[5]:  # check sum cols of fv_5 + fv_6
-                    idx_qd_cross_zero.append(k)
+        # if i == 4 or i == 5:  # joint 5 and 6
+        #     for k in range(W_list[i].shape[0]):
+        #         if abs(W_list[i][k, 4 * 14 + 11] + W_list[i][k, 5 * 14 + 11]) < qd_lim[4] + qd_lim[5]:  # check sum cols of fv_5 + fv_6
+        #             idx_qd_cross_zero.append(k)
         # indices with vels around zero
         idx_eliminate = list(set(idx_qd_cross_zero))
         W_list[i] = np.delete(W_list[i], idx_eliminate, axis=0)
@@ -724,8 +741,8 @@ if __name__ == '__main__':
 
     
     path_save_bp = join(dirname(dirname(str(abspath(__file__)))),
-                     "identification/src/thanh/TX40_bp_3.csv")
-    with open(path_save_bp, "w") as output_file:
+                     "identification/src/thanh/TX40_bp_5.csv")
+    with open(path_save_bp , "w") as output_file:
         w = csv.writer(output_file)
         for i in range(len(params_base)):
             w.writerow([params_base[i], phi_b_ols[i], std_xr_ols[i], phi_b[i], std_xr[i]])
@@ -775,7 +792,7 @@ if __name__ == '__main__':
     print('condition number of essential regressor: ', np.linalg.cond(W_essential))
     #save results to csv
     path_save_ep = join(dirname(dirname(str(abspath(__file__)))),
-                     "identification/src/thanh/TX40_ep_3.csv")
+                     "identification/src/thanh/TX40_ep_5.csv")
     with open(path_save_ep, "w") as output_file:
         w = csv.writer(output_file)
         for i in range(len(params_essential)):

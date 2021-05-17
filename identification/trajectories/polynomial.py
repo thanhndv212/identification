@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import math
 import time
-from curves import (polynomial, piecewise, cubic_hermite_spline)
+from ndcurves import (polynomial, piecewise, cubic_hermite_spline)
 import trapezoidal
 import eigenpy
 eigenpy.switchToNumpyArray()

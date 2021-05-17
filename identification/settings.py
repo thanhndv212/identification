@@ -1,4 +1,5 @@
 from pinocchio.robot_wrapper import RobotWrapper
+import pinocchio as pin
 from os.path import dirname, join, abspath
 from sys import argv
 import numpy as np

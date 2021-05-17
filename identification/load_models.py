@@ -1,17 +1,19 @@
 import pinocchio as pin
 from pinocchio.robot_wrapper import RobotWrapper
 from pinocchio.visualize import (GepettoVisualizer, MeshcatVisualizer)
+from pinocchio.utils import *
+
 from sys import argv
-# from tabulate import tabulate
+import os
+from os.path import dirname, join, abspath
+
 import time
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from numpy.linalg import norm, solve
-from pinocchio.utils import *
 from scipy import linalg
-import os
-from os.path import dirname, join, abspath
+
 import pandas as pd
 
 isFext = False
@@ -19,7 +21,7 @@ isFext = False
 # Load the URDF model with RobotWrapper
 
 
-def loadModels(robotname, robot_urdf_file):
+def loadModels(robotname, robot_urdf_file, isFext = False):
     """This function create a robot model and its data by inputting a URDF file that describes the robot.
             Input: 	robotname: directory containing model of robot
                     robot_urdf_file: URDF file of robot
@@ -38,7 +40,7 @@ def loadModels(robotname, robot_urdf_file):
     return robot
 
 
-def visualization(robot, q0):
+def visualization(robot, q, q0=False):
     VISUALIZER = None
     if len(argv) > 1:
         opt = argv[1]
@@ -48,8 +50,8 @@ def visualization(robot, q0):
             VISUALIZER = MeshcatVisualizer
         # else:
         #    raise ValueError("Unrecognized option: " + opt)
-    q = test_trajectory()
-    dt = 1 / 5000
+    
+    dt = 1 / 500
     if VISUALIZER:
         robot.setVisualizer(VISUALIZER())
         robot.initViewer()
@@ -59,7 +61,7 @@ def visualization(robot, q0):
             print("q0 = ", robot.q0)
         else:
             for k in range(q.shape[0]):
-                if k % 5 == 0:
+                if k % 1 == 0:
                     t0 = time.time()
                     robot.display(q[k, :])
                     t1 = time.time()
@@ -105,9 +107,9 @@ def test_trajectory():
     # Q[:,5] += -np.pi
 
     return Q
+def main():
+    q = test_trajectory()
+    robot = loadModels("staubli_tx40_description", "tx40_mdh_modified.urdf")
+    # robot = loadModels("2DOF_description", "2DOF_description.urdf")
 
-
-robot = loadModels("staubli_tx40_description", "tx40_mdh_modified.urdf")
-# robot = loadModels("2DOF_description", "2DOF_description.urdf")
-
-visualization(robot, True)
+    visualization(robot, True)
